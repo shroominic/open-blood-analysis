@@ -1,0 +1,7 @@
+{
+    "ai": {
+        "model": "gemini-3-flash-preview",
+        "base_url": "https://staging.routstr.com/v1",
+        "api_key": "cashuBo2FteCJodHRwczovL21pbn...",
+    }
+}
