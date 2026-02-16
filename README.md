@@ -71,11 +71,11 @@ Create a `.env` file in the project root:
 
 ```bash
 GEMINI_API_KEY=your-gemini-api-key
-AI_MODEL=gemini-2.0-flash
+AI_MODEL=gemini-3-flash-preview
 # Optional task-specific overrides:
-# AI_OCR_MODEL=gemini-2.0-flash
-# AI_RESEARCH_MODEL=gemini-2.0-flash
-# AI_THINKING_MODEL=gemini-2.0-flash
+# AI_OCR_MODEL=gemini-3-flash-preview
+# AI_RESEARCH_MODEL=gemini-3-flash-preview
+# AI_THINKING_MODEL=gemini-3-flash-preview
 # BIOMARKERS_PATH=biomarkers.json
 ```
 

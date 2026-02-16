@@ -1,0 +1,97 @@
+{
+  "data": [
+    {
+      "raw_name": "COLESTEROL TOTAL",
+      "value": 145,
+      "unit": "mg/dL",
+      "flags": []
+    },
+    {
+      "raw_name": "TRIGLICERIDOS",
+      "value": 52,
+      "unit": "mg/dL",
+      "flags": []
+    },
+    {
+      "raw_name": "COLESTEROL HDL",
+      "value": 40,
+      "unit": "mg/dL",
+      "flags": []
+    },
+    {
+      "raw_name": "COLESTEROL LDL-PLUS",
+      "value": 101,
+      "unit": "mg/dL",
+      "flags": []
+    },
+    {
+      "raw_name": "COLESTEROL VLDL",
+      "value": 10,
+      "unit": "mg/dL",
+      "flags": []
+    },
+    {
+      "raw_name": "Indice de riesgo 1",
+      "value": 3.6,
+      "unit": "",
+      "flags": []
+    },
+    {
+      "raw_name": "Indice de riesgo 2",
+      "value": 2.5,
+      "unit": "",
+      "flags": []
+    },
+    {
+      "raw_name": "GPT (ALT), SANGRE",
+      "value": 24,
+      "unit": "U/L",
+      "flags": []
+    },
+    {
+      "raw_name": "GOT (AST), SANGRE",
+      "value": 25,
+      "unit": "U/L",
+      "flags": []
+    },
+    {
+      "raw_name": "FOSFATASA ALCALINA, SANGRE",
+      "value": 93,
+      "unit": "U/L",
+      "flags": []
+    },
+    {
+      "raw_name": "GAMMA GT (GAMMA GLUTAMIL TRANSFERASA), SANGRE",
+      "value": 15,
+      "unit": "U/L",
+      "flags": []
+    },
+    {
+      "raw_name": "TSH ULTRASENSIBLE, SANGRE",
+      "value": 1.54,
+      "unit": "\u00b5UI/mL",
+      "flags": []
+    },
+    {
+      "raw_name": "TESTOSTERONA TOTAL, SANGRE",
+      "value": 593.8,
+      "unit": "ng/dL",
+      "flags": []
+    },
+    {
+      "raw_name": "APOLIPOPROTEINA A-1, SANGRE",
+      "value": 1.27,
+      "unit": "g/L",
+      "flags": []
+    },
+    {
+      "raw_name": "APOLIPOPROTEINA B, SANGRE",
+      "value": 0.78,
+      "unit": "g/L",
+      "flags": []
+    }
+  ],
+  "notes": [
+    "Aspecto del suero: L\u00edmpido"
+  ]
+}

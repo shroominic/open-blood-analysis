@@ -1,0 +1,111 @@
+{
+  "biomarkers": [
+    {
+      "biomarker_id": "total_cholesterol",
+      "display_name": "COLESTEROL TOTAL",
+      "value": 145.0,
+      "unit": "mg/dL",
+      "status": "normal",
+      "notes": null
+    },
+    {
+      "biomarker_id": "triglycerides",
+      "display_name": "TRIGLICERIDOS",
+      "value": 52.0,
+      "unit": "mg/dL",
+      "status": "normal",
+      "notes": null
+    },
+    {
+      "biomarker_id": "hdl_cholesterol",
+      "display_name": "COLESTEROL HDL",
+      "value": 40.0,
+      "unit": "mg/dL",
+      "status": "low",
+      "notes": null
+    },
+    {
+      "biomarker_id": "ldl_cholesterol",
+      "display_name": "COLESTEROL LDL-PLUS",
+      "value": 101.0,
+      "unit": "mg/dL",
+      "status": "high",
+      "notes": null
+    },
+    {
+      "biomarker_id": "vldl_cholesterol",
+      "display_name": "COLESTEROL VLDL",
+      "value": 10.0,
+      "unit": "mg/dL",
+      "status": "normal",
+      "notes": null
+    },
+    {
+      "biomarker_id": "alanine_aminotransferase",
+      "display_name": "GPT (ALT), SANGRE",
+      "value": 24.0,
+      "unit": "U/L",
+      "status": "normal",
+      "notes": null
+    },
+    {
+      "biomarker_id": "aspartate_aminotransferase",
+      "display_name": "GOT (AST), SANGRE",
+      "value": 25.0,
+      "unit": "U/L",
+      "status": "normal",
+      "notes": null
+    },
+    {
+      "biomarker_id": "alkaline_phosphatase",
+      "display_name": "FOSFATASA ALCALINA, SANGRE",
+      "value": 93.0,
+      "unit": "U/L",
+      "status": "normal",
+      "notes": null
+    },
+    {
+      "biomarker_id": "gamma_glutamyl_transferase",
+      "display_name": "GAMMA GT (GAMMA GLUTAMIL TRANSFERASA), SANGRE",
+      "value": 15.0,
+      "unit": "U/L",
+      "status": "normal",
+      "notes": null
+    },
+    {
+      "biomarker_id": "thyroid_stimulating_hormone",
+      "display_name": "TSH ULTRASENSIBLE, SANGRE",
+      "value": 1.54,
+      "unit": "mIU/L",
+      "status": "normal",
+      "notes": "Converted from 1.54 \u00b5UI/mL"
+    },
+    {
+      "biomarker_id": "total_testosterone",
+      "display_name": "TESTOSTERONA TOTAL, SANGRE",
+      "value": 593.8,
+      "unit": "ng/dL",
+      "status": "normal",
+      "notes": null
+    },
+    {
+      "biomarker_id": "apolipoprotein_a1",
+      "display_name": "APOLIPOPROTEINA A-1, SANGRE",
+      "value": 127.0,
+      "unit": "mg/dL",
+      "status": "normal",
+      "notes": "Converted from 1.27 g/L"
+    },
+    {
+      "biomarker_id": "apolipoprotein_b",
+      "display_name": "APOLIPOPROTEINA B, SANGRE",
+      "value": 78.0,
+      "unit": "mg/dL",
+      "status": "normal",
+      "notes": "Converted from 0.78 g/L"
+    }
+  ],
+  "notes": [
+    "Aspecto del suero: L\u00edmpido"
+  ]
+}

@@ -1,0 +1,588 @@
+[
+  {
+    "id": "total_cholesterol",
+    "aliases": [
+      "Colesterol Total",
+      "Serum cholesterol",
+      "Lipid panel - total cholesterol",
+      "Total blood cholesterol"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "A measure of the total amount of cholesterol in the blood, including LDL, HDL, and VLDL components, used to assess cardiovascular risk.",
+    "min_normal": 0.0,
+    "max_normal": 199.9,
+    "conversions": {
+      "mmol/L": "x * 38.67"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 19",
+        "min_normal": 0.0,
+        "max_normal": 169.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 20",
+        "min_normal": 0.0,
+        "max_normal": 199.0,
+        "priority": 1
+      },
+      {
+        "condition": "status == 'borderline_high'",
+        "min_normal": 200.0,
+        "max_normal": 239.0,
+        "priority": 2
+      },
+      {
+        "condition": "status == 'high'",
+        "min_normal": 240.0,
+        "max_normal": null,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "triglycerides",
+    "aliases": [
+      "triglic\u00e9ridos",
+      "triacylglycerols",
+      "TG",
+      "TRIG",
+      "serum triglycerides",
+      "plasma triglycerides"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Triglycerides are a type of lipid (fat) found in the blood, representing the most common form of fat storage and energy transport in the body.",
+    "min_normal": 0.0,
+    "max_normal": 150.0,
+    "conversions": {
+      "mmol/L": "x * 88.57"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 10",
+        "min_normal": 0.0,
+        "max_normal": 75.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 10 and age < 20",
+        "min_normal": 0.0,
+        "max_normal": 90.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 0.0,
+        "max_normal": 150.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'male' and age >= 20",
+        "min_normal": 40.0,
+        "max_normal": 160.0,
+        "priority": 3
+      },
+      {
+        "condition": "sex == 'female' and age >= 20",
+        "min_normal": 35.0,
+        "max_normal": 135.0,
+        "priority": 3
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "hdl_cholesterol",
+    "aliases": [
+      "high-density lipoprotein cholesterol",
+      "colesterol hdl",
+      "hdl-c",
+      "good cholesterol",
+      "hdlc",
+      "lipoprote\u00edna de alta densidad"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "High-density lipoprotein (HDL) cholesterol is known as 'good' cholesterol because it helps remove other forms of cholesterol from your bloodstream, transporting it to the liver for excretion.",
+    "min_normal": 40.0,
+    "max_normal": 80.0,
+    "conversions": {
+      "mmol/L": "x * 38.67"
+    },
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 40.0,
+        "max_normal": 80.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 50.0,
+        "max_normal": 80.0,
+        "priority": 1
+      },
+      {
+        "condition": "True",
+        "min_normal": 60.0,
+        "max_normal": null,
+        "priority": 0
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "ldl_cholesterol",
+    "aliases": [
+      "COLESTEROL LDL-PLUS",
+      "LDL-C",
+      "Low-Density Lipoprotein Cholesterol",
+      "Bad Cholesterol",
+      "Colesterol de lipoprote\u00edna de baja densidad",
+      "Direct LDL"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Low-density lipoprotein cholesterol (LDL-C) measures the amount of cholesterol carried in LDL particles, which are associated with the buildup of plaque in arteries (atherosclerosis).",
+    "min_normal": 0.0,
+    "max_normal": 100.0,
+    "conversions": {
+      "mmol/L": "x * 38.67"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 18",
+        "min_normal": 0.0,
+        "max_normal": 110.0,
+        "priority": 1
+      },
+      {
+        "condition": "risk_factor == 'heart_disease' or risk_factor == 'diabetes'",
+        "min_normal": 0.0,
+        "max_normal": 70.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 0.0,
+        "max_normal": 100.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "vldl_cholesterol",
+    "aliases": [
+      "COLESTEROL VLDL",
+      "Very Low-Density Lipoprotein Cholesterol",
+      "VLDL-C",
+      "Colesterol de muy baja densidad",
+      "VLDL cholest\u00e9rol"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "A type of lipoprotein produced by the liver that contains the highest amount of triglycerides. It is considered a 'bad' cholesterol because it contributes to plaque buildup in the arteries.",
+    "min_normal": 2.0,
+    "max_normal": 30.0,
+    "conversions": {
+      "mmol/L": "x * 38.67"
+    },
+    "reference_rules": [
+      {
+        "condition": "age >= 18",
+        "min_normal": 2.0,
+        "max_normal": 30.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "alanine_aminotransferase",
+    "aliases": [
+      "GPT",
+      "ALT",
+      "SGP",
+      "SGPT",
+      "GPT (ALT), SANGRE",
+      "Alanine transaminase",
+      "Serum glutamic-pyruvic transaminase",
+      "Glutamato-piruvato transaminasa"
+    ],
+    "canonical_unit": "U/L",
+    "description": "An enzyme primarily found in the liver that acts as a sensitive marker for hepatocellular injury. Elevated levels typically indicate liver damage or disease.",
+    "min_normal": 4.0,
+    "max_normal": 42.0,
+    "conversions": {
+      "\u00b5kat/L": "x * 60"
+    },
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 0.0,
+        "max_normal": 41.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 0.0,
+        "max_normal": 33.0,
+        "priority": 1
+      },
+      {
+        "condition": "age < 1.5",
+        "min_normal": 0.0,
+        "max_normal": 60.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1.5 and age < 18 and sex == 'male'",
+        "min_normal": 0.0,
+        "max_normal": 40.0,
+        "priority": 3
+      },
+      {
+        "condition": "age >= 1.5 and age < 18 and sex == 'female'",
+        "min_normal": 0.0,
+        "max_normal": 35.0,
+        "priority": 3
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "aspartate_aminotransferase",
+    "aliases": [
+      "GOT",
+      "AST",
+      "GOT (AST), SANGRE",
+      "SGOT",
+      "Serum Glutamic-Oxaloacetic Transaminase",
+      "Aspartato Aminotransferasa",
+      "Transaminasa Glut\u00e1mico-Oxalac\u00e9tica"
+    ],
+    "canonical_unit": "U/L",
+    "description": "An enzyme found in high concentrations in the liver, heart, muscles, kidneys, and red blood cells; released into the bloodstream when these tissues are damaged.",
+    "min_normal": 10.0,
+    "max_normal": 40.0,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 10.0,
+        "max_normal": 40.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 10.0,
+        "max_normal": 35.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "alkaline_phosphatase",
+    "aliases": [
+      "FOSFATASA ALCALINA, SANGRE",
+      "ALP",
+      "ALPS",
+      "ALKP",
+      "Alkaline Phosphatase, Serum",
+      "Fosfatasa alcalina"
+    ],
+    "canonical_unit": "U/L",
+    "description": "An enzyme found in various tissues, primarily the liver, bones, kidneys, and digestive tract, used to diagnose and monitor liver or bone disorders.",
+    "min_normal": 40.0,
+    "max_normal": 129.0,
+    "conversions": {
+      "\u00b5kat/L": "x * 60",
+      "\u00b5mol/s/L": "x * 60"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 18",
+        "min_normal": 45.0,
+        "max_normal": 469.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'male' and age >= 19",
+        "min_normal": 40.0,
+        "max_normal": 129.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female' and age >= 19",
+        "min_normal": 35.0,
+        "max_normal": 104.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "gamma_glutamyl_transferase",
+    "aliases": [
+      "GAMMA GT",
+      "GAMMA GLUTAMIL TRANSFERASA",
+      "GGT",
+      "GGTP",
+      "Gamma-GT",
+      "Gamma-glutamyl transpeptidase",
+      "GTP"
+    ],
+    "canonical_unit": "U/L",
+    "description": "An enzyme found primarily in the liver, bile ducts, and kidneys. It is a highly sensitive indicator of liver or biliary tract disease and is often used to monitor alcohol consumption or differentiate between liver and bone disease when alkaline phosphatase (ALP) is elevated.",
+    "min_normal": 5.0,
+    "max_normal": 61.0,
+    "conversions": {
+      "\u00b5kat/L": "x * 59.88"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": null,
+        "max_normal": 178.0,
+        "priority": 3
+      },
+      {
+        "condition": "age >= 1 and age <= 6",
+        "min_normal": null,
+        "max_normal": 21.0,
+        "priority": 3
+      },
+      {
+        "condition": "age >= 7 and age <= 12",
+        "min_normal": null,
+        "max_normal": 24.0,
+        "priority": 3
+      },
+      {
+        "condition": "sex == 'male' and age >= 18",
+        "min_normal": 8.0,
+        "max_normal": 61.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'female' and age >= 18",
+        "min_normal": 5.0,
+        "max_normal": 36.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'male' and age >= 13 and age <= 17",
+        "min_normal": null,
+        "max_normal": 43.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'female' and age >= 13 and age <= 17",
+        "min_normal": null,
+        "max_normal": 26.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "thyroid_stimulating_hormone",
+    "aliases": [
+      "TSH",
+      "TSH Ultrasensible",
+      "TSH Sangre",
+      "Thyrotropin",
+      "Ultra-sensitive TSH",
+      "TSH 3rd Generation",
+      "Hormona Estimulante de la Tiroides"
+    ],
+    "canonical_unit": "mIU/L",
+    "description": "A glycoprotein hormone produced by the anterior pituitary gland that stimulates the thyroid gland to produce thyroxine (T4) and triiodothyronine (T3). 'Ultrasensible' refers to 3rd generation assays with high functional sensitivity.",
+    "min_normal": 0.4,
+    "max_normal": 4.0,
+    "conversions": {
+      "\u00b5UI/mL": "x",
+      "uIU/mL": "x",
+      "mU/L": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "pregnancy == True and trimester == 1",
+        "min_normal": 0.1,
+        "max_normal": 2.5,
+        "priority": 1
+      },
+      {
+        "condition": "pregnancy == True and trimester == 2",
+        "min_normal": 0.2,
+        "max_normal": 3.0,
+        "priority": 1
+      },
+      {
+        "condition": "pregnancy == True and trimester == 3",
+        "min_normal": 0.3,
+        "max_normal": 3.0,
+        "priority": 1
+      },
+      {
+        "condition": "age < 1",
+        "min_normal": 1.0,
+        "max_normal": 7.0,
+        "priority": 2
+      },
+      {
+        "condition": "age > 80",
+        "min_normal": 0.4,
+        "max_normal": 7.5,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "total_testosterone",
+    "aliases": [
+      "TESTOSTERONA TOTAL, SANGRE",
+      "Serum Testosterone",
+      "Total Testosterone",
+      "Tostesterona s\u00e9rica",
+      "Male sex hormone"
+    ],
+    "canonical_unit": "ng/dL",
+    "description": "A measurement of the total amount of testosterone in the blood, including testosterone bound to proteins (SHBG and albumin) and free testosterone.",
+    "min_normal": 300.0,
+    "max_normal": 1000.0,
+    "conversions": {
+      "nmol/L": "x * 28.85"
+    },
+    "reference_rules": [
+      {
+        "condition": "sex == 'male' and age >= 19",
+        "min_normal": 300.0,
+        "max_normal": 1000.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female' and age >= 19",
+        "min_normal": 15.0,
+        "max_normal": 70.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'male' and 30 <= age < 40",
+        "min_normal": 300.0,
+        "max_normal": 950.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'male' and 40 <= age < 50",
+        "min_normal": 250.0,
+        "max_normal": 900.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'male' and 50 <= age < 60",
+        "min_normal": 215.0,
+        "max_normal": 850.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "apolipoprotein_a1",
+    "aliases": [
+      "APOLIPOPROTEINA A-1, SANGRE",
+      "Apo A1",
+      "ApoA1",
+      "Apolipoprotein A-I",
+      "Apolipoprotein A"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "The primary protein component of high-density lipoprotein (HDL) particles; it facilitates cholesterol efflux from tissues to the liver for excretion.",
+    "min_normal": 110.0,
+    "max_normal": 180.0,
+    "conversions": {
+      "g/L": "x * 100"
+    },
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 110.0,
+        "max_normal": 170.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 120.0,
+        "max_normal": 190.0,
+        "priority": 1
+      },
+      {
+        "condition": "age < 18",
+        "min_normal": 115.0,
+        "max_normal": 160.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  },
+  {
+    "id": "apolipoprotein_b",
+    "aliases": [
+      "APOLIPOPROTEINA B, SANGRE",
+      "ApoB",
+      "Apolipoprotein B-100",
+      "Apo B",
+      "Apolipoprote\u00edna B"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "A protein that is the primary structural component of all atherogenic (artheroclastic) lipoproteins, including LDL, VLDL, and IDL. It is considered a superior predictor of cardiovascular risk compared to LDL cholesterol alone.",
+    "min_normal": 40.0,
+    "max_normal": 130.0,
+    "conversions": {
+      "g/L": "x * 100"
+    },
+    "reference_rules": [
+      {
+        "condition": "risk == 'low'",
+        "min_normal": 40.0,
+        "max_normal": 130.0,
+        "priority": 1
+      },
+      {
+        "condition": "risk == 'moderate'",
+        "min_normal": null,
+        "max_normal": 110.0,
+        "priority": 2
+      },
+      {
+        "condition": "risk == 'high'",
+        "min_normal": null,
+        "max_normal": 90.0,
+        "priority": 3
+      },
+      {
+        "condition": "risk == 'very_high'",
+        "min_normal": null,
+        "max_normal": 80.0,
+        "priority": 4
+      }
+    ],
+    "source": "research-agent-openai",
+    "normal_values": null
+  }
+]
