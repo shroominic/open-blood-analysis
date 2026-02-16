@@ -1,35 +1,37 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic_settings import (  # ty:ignore[unresolved-import]
+    BaseSettings,
+    SettingsConfigDict,
+)
+from typing import Literal, Optional
 
 
-class AIConfig(BaseModel):
-    api_key: str
-    base_url: str = "https://api.openai.com/v1"
-    model: str = "gpt-5-nano"
+class Config(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
-    # Task specific models (fallback to 'model' if None)
-    ocr_model: Optional[str] = None
-    research_model: Optional[str] = None
-    thinking_model: Optional[str] = None
+    ai_provider: Literal["gemini", "openai"] = "gemini"
+    gemini_api_key: Optional[str] = None
+    openai_api_key: Optional[str] = None
+    ai_model: str = "gemini-3-flash-preview"
+
+    # Task specific models (fallback to ai_model if None)
+    ai_ocr_model: Optional[str] = None
+    ai_research_model: Optional[str] = None
+    ai_thinking_model: Optional[str] = None
+
+    biomarkers_path: str = "biomarkers.json"
 
     @property
     def ocr(self) -> str:
-        return self.ocr_model or self.model
+        return self.ai_ocr_model or self.ai_model
 
     @property
     def research(self) -> str:
-        return self.research_model or self.model
+        return self.ai_research_model or self.ai_model
 
     @property
     def thinking(self) -> str:
-        return self.thinking_model or self.model
-
-
-class Config(BaseModel):
-    ai: AIConfig
-    biomarkers_path: str = "biomarkers.json"
-
-    @classmethod
-    def load(cls, path: str = "config.json") -> "Config":
-        with open(path, "r") as f:
-            return cls.model_validate_json(f.read())
+        return self.ai_thinking_model or self.ai_model

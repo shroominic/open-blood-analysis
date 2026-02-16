@@ -10,6 +10,7 @@ An AI-powered blood test analysis tool that extracts biomarkers from lab reports
 - **Auto-Research** - Automatically researches unknown biomarkers via web search
 - **Unit Conversion** - Converts units to canonical formats using safe expression evaluation
 - **Demographic Ranges** - Adjusts reference ranges based on age and sex
+- **Granular Status** - Distinguishes `low/high`, `optimal`, `moderate`, and `elevated`
 - **Growing Knowledge Base** - Learns new biomarkers and saves them for future analyses
 
 ## 🔄 Processing Pipeline
@@ -42,9 +43,9 @@ flowchart TD
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.13+
 - [uv](https://github.com/astral-sh/uv) (recommended) or pip
-- OpenAI API key (or compatible endpoint)
+- Gemini API key
 - Poppler (for PDF processing)
 
 ### macOS Setup
@@ -66,21 +67,21 @@ pip install -e .
 
 ### Configuration
 
-Create a `config.yaml` file in your working directory or use the default:
+Create a `.env` file in the project root:
 
-```yaml
-ai:
-  api_key: "your-openai-api-key"
-  base_url: "https://api.openai.com/v1"  # or compatible endpoint
-  ocr: "gpt-4o"           # Vision model for extraction
-  research: "gpt-4o-mini" # Model for research agent
-
-biomarkers_path: "biomarkers.json"
+```bash
+GEMINI_API_KEY=your-gemini-api-key
+AI_MODEL=gemini-2.0-flash
+# Optional task-specific overrides:
+# AI_OCR_MODEL=gemini-2.0-flash
+# AI_RESEARCH_MODEL=gemini-2.0-flash
+# AI_THINKING_MODEL=gemini-2.0-flash
+# BIOMARKERS_PATH=biomarkers.json
 ```
 
-Or set environment variables:
+Or export variables directly:
 ```bash
-export OPENAI_API_KEY="your-key"
+export GEMINI_API_KEY="your-gemini-api-key"
 ```
 
 ## 🚀 Usage
@@ -121,19 +122,30 @@ uv run blood-analysis report.pdf --output results.csv
 uv run blood-analysis report.pdf --no-research
 ```
 
+### Manually Re-Research One Biomarker
+
+```bash
+# Refresh an existing entry (or add if not found)
+uv run blood-analysis --reresearch-biomarker apolipoprotein_b
+
+# Provide explicit unit context for the research prompt
+uv run blood-analysis --reresearch-biomarker thyroid_stimulating_hormone --reresearch-unit "uIU/mL"
+
+# Preview researched JSON without writing biomarkers.json
+uv run blood-analysis --reresearch-biomarker rdw --dry-run-reresearch
+```
+
 ## 📊 Example Output
 
 ```
                               Analysis Results                              
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Biomarker               ┃ Value  ┃ Unit   ┃ Status ┃ ID                   ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
-│ COLESTEROL TOTAL        │ 3.75   │ mmol/L │ normal │ total_cholesterol    │
-│ TRIGLICERIDOS           │ 0.59   │ mmol/L │ normal │ triglycerides        │
-│ HDL                     │ 1.03   │ mmol/L │ normal │ hdl_cholesterol      │
-│ LDL                     │ 2.61   │ mmol/L │ high   │ ldl_cholesterol      │
-│ GPT (ALT)               │ 24.0   │ U/L    │ normal │ alanine_transaminase │
-└─────────────────────────┴────────┴────────┴────────┴──────────────────────┘
+┃ Biomarker        ┃ Value ┃ Unit  ┃ Reference ┃ Optimal ┃ Peak ┃ Status                   ┃ ID                ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│ COLESTEROL TOTAL │ 145.0 │ mg/dL │ 0 - 199   │ 130-160 │ -    │ elevated                 │ total_cholesterol │
+│ COLESTEROL HDL   │ 40.0  │ mg/dL │ 40 - 80   │ 55-70   │ -    │ moderate                 │ hdl_cholesterol   │
+│ LDL              │ 101.0 │ mg/dL │ 0 - 100   │ 55-85   │ -    │ high                     │ ldl_cholesterol   │
+└──────────────────┴───────┴───────┴───────────┴─────────┴──────┴──────────────────────────┴───────────────────┘
 ```
 
 ## 🗃️ Biomarkers Database
@@ -144,23 +156,34 @@ The tool maintains a `biomarkers.json` file that grows as you analyze more repor
 {
   "id": "total_cholesterol",
   "aliases": ["COLESTEROL TOTAL", "cholesterol, total", "TC"],
-  "canonical_unit": "mmol/L",
+  "canonical_unit": "g/L",
   "description": "Total cholesterol in blood",
+  "value_type": "quantitative",
+  "enum_values": null,
   "min_normal": null,
   "max_normal": 5.18,
-  "conversions": {
-    "mg/dL": "x / 38.67"
-  },
+  "min_optimal": 3.6,
+  "max_optimal": 4.8,
+  "peak_value": null,
+  "molar_mass_g_per_mol": 386.65,
+  "conversions": {},
   "reference_rules": [
     {"condition": "age > 60", "max_normal": 6.2, "priority": 1}
   ],
-  "source": "research-agent-openai"
+  "source": "research-agent-gemini"
 }
 ```
 
 ### Unit Conversions
 
-Conversions use safe expression evaluation with `simpleeval`:
+The conversion engine handles generic concentration scaling automatically:
+- Mass scaling: `mg/dL <-> g/L`, `ng/mL <-> ug/L`, etc.
+- Molar scaling: `mmol/L <-> umol/L`, etc.
+- Mass↔molar conversion when `molar_mass_g_per_mol` is provided.
+
+Biomarker `conversions` are only for special transforms not covered generically.
+
+Special formulas use safe expression evaluation with `simpleeval`:
 - `x` represents the input value
 - Example: `"mg/dL": "x / 38.67"` converts mg/dL to mmol/L
 
