@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import logging
@@ -13,6 +14,9 @@ except ImportError:
     fuzz = None  # type: ignore
 
 from .types import BiomarkerEntry
+
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_biomarker_name(name: str) -> str:
@@ -58,7 +62,11 @@ def load_db(path: str) -> List[BiomarkerEntry]:
             try:
                 data = json.load(f)
                 return [BiomarkerEntry(**item) for item in data]
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as exc:
+                logger.error(
+                    "Corrupt biomarkers database at '%s': %s. Returning empty list.",
+                    path, exc,
+                )
                 return []
 
 
@@ -263,8 +271,15 @@ def append_to_db(
                 try:
                     data = json.load(f)
                     current_entries = [BiomarkerEntry(**item) for item in data]
-                except json.JSONDecodeError:
-                    pass
+                except json.JSONDecodeError as exc:
+                    import shutil
+                    corrupt_path = path + ".corrupt"
+                    shutil.copy2(path, corrupt_path)
+                    logger.error(
+                        "Corrupt biomarkers database at '%s': %s. "
+                        "Backed up to '%s' before proceeding.",
+                        path, exc, corrupt_path,
+                    )
         else:
             current_entries = []
 
@@ -280,3 +295,39 @@ def append_to_db(
             json.dump([entry.model_dump() for entry in updated_list], f, indent=2)
 
         return updated_list
+
+
+# ---------------------------------------------------------------------------
+# Async wrappers — avoid blocking the event loop from async callers.
+# ---------------------------------------------------------------------------
+
+async def aload_db(path: str) -> List[BiomarkerEntry]:
+    return await asyncio.to_thread(load_db, path)
+
+
+async def asave_db(path: str, entries: List[BiomarkerEntry]):
+    await asyncio.to_thread(save_db, path, entries)
+
+
+async def aappend_to_db(
+    path: str, entries: List[BiomarkerEntry], new_entry: BiomarkerEntry
+) -> List[BiomarkerEntry]:
+    return await asyncio.to_thread(append_to_db, path, entries, new_entry)
+
+
+async def aadd_alias_to_entry(
+    path: str, entries: List[BiomarkerEntry], entry_id: str, alias: str
+) -> List[BiomarkerEntry]:
+    return await asyncio.to_thread(add_alias_to_entry, path, entries, entry_id, alias)
+
+
+async def amerge_researched_entry(
+    path: str,
+    entries: List[BiomarkerEntry],
+    existing_entry_id: str,
+    researched_entry: BiomarkerEntry,
+    observed_raw_name: str,
+) -> List[BiomarkerEntry]:
+    return await asyncio.to_thread(
+        merge_researched_entry, path, entries, existing_entry_id, researched_entry, observed_raw_name
+    )

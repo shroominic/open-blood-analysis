@@ -1,1 +1,3409 @@
-[]
+[
+  {
+    "id": "total_cholesterol",
+    "aliases": [
+      "Cholesterol",
+      "Total Cholesterol",
+      "Colesterol total",
+      "Colesterol",
+      "CHOL",
+      "Cholesterin",
+      "Total Serum Cholesterol"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "A measurement of the total amount of cholesterol in the blood, representing the sum of cholesterol carried in various lipoprotein particles including LDL, HDL, and VLDL.",
+    "min_normal": 125.0,
+    "max_normal": 200.0,
+    "min_optimal": 150.0,
+    "max_optimal": 180.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 386.65,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 19",
+        "min_normal": 120.0,
+        "max_normal": 170.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 20",
+        "min_normal": 125.0,
+        "max_normal": 200.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "triglycerides",
+    "aliases": [
+      "Triglic\u00e9ridos",
+      "TG",
+      "Triacylglycerols",
+      "TAG",
+      "Serum Triglycerides",
+      "Triglycerides, Blood"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Triglycerides are the most common type of fat (lipid) in the body, used for energy storage. High levels in the blood are associated with an increased risk of cardiovascular disease and acute pancreatitis.",
+    "min_normal": 0.0,
+    "max_normal": 150.0,
+    "min_optimal": 0.0,
+    "max_optimal": 100.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 885.4,
+    "conversions": {
+      "mmol/L": "x * 88.57"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 10",
+        "min_normal": 0.0,
+        "max_normal": 75.0,
+        "priority": 3
+      },
+      {
+        "condition": "age < 20",
+        "min_normal": 0.0,
+        "max_normal": 90.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 20",
+        "min_normal": 0.0,
+        "max_normal": 150.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "hdl_cholesterol",
+    "aliases": [
+      "High-density lipoprotein cholesterol",
+      "HDL-C",
+      "Colesterol HDL",
+      "Good cholesterol",
+      "HDL",
+      "Colesterol de lipoprote\u00edna de alta densidad",
+      "Alpha-lipoprotein cholesterol"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "High-density lipoprotein (HDL) cholesterol measures the cholesterol carried by HDL particles, which absorb cholesterol in the blood and carry it back to the liver to be flushed from the body. Higher levels are associated with a reduced risk of cardiovascular disease.",
+    "min_normal": 40.0,
+    "max_normal": null,
+    "min_optimal": 60.0,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 386.65,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 40.0,
+        "max_normal": null,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 50.0,
+        "max_normal": null,
+        "priority": 1
+      },
+      {
+        "condition": "age < 19",
+        "min_normal": 45.0,
+        "max_normal": null,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "ldl_cholesterol",
+    "aliases": [
+      "LDL cholesterol",
+      "Low-density lipoprotein cholesterol",
+      "LDL-C",
+      "Direct LDL",
+      "Colesterol LDL-Plus",
+      "Bad cholesterol"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Cholesterol carried by low-density lipoprotein (LDL) particles. LDL is often called 'bad' cholesterol because high levels lead to the buildup of plaque in arteries (atherosclerosis), increasing the risk of heart disease and stroke.",
+    "min_normal": 0.0,
+    "max_normal": 129.0,
+    "min_optimal": null,
+    "max_optimal": 99.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 386.65,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 19",
+        "min_normal": 0.0,
+        "max_normal": 110.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 19",
+        "min_normal": 0.0,
+        "max_normal": 129.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "vldl_cholesterol",
+    "aliases": [
+      "COLESTEROL VLDL",
+      "Very Low-Density Lipoprotein Cholesterol",
+      "VLDL-C",
+      "VLDL Cholesterol",
+      "Very-low-density lipoprotein cholesterol"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Very low-density lipoprotein (VLDL) cholesterol is a component of total cholesterol. VLDL particles primarily carry triglycerides throughout the body; high levels are associated with an increased risk of plaque buildup in the arteries and cardiovascular disease.",
+    "min_normal": 2.0,
+    "max_normal": 30.0,
+    "min_optimal": null,
+    "max_optimal": 15.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 386.65,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age >= 0",
+        "min_normal": 2.0,
+        "max_normal": 30.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "alanine_aminotransferase",
+    "aliases": [
+      "ALT",
+      "GPT",
+      "SGPT",
+      "Serum Glutamic Pyruvic Transaminase",
+      "Glutamate Pyruvate Transaminase",
+      "Alanina aminotransferasa",
+      "GPT (ALT), SANGRE",
+      "SGPT (ALT)"
+    ],
+    "canonical_unit": "U/L",
+    "description": "Alanine aminotransferase (ALT) is an enzyme found primarily in the liver. It is released into the bloodstream when liver cells are damaged or inflamed, making it a highly specific biomarker for liver injury.",
+    "min_normal": 0.0,
+    "max_normal": 40.0,
+    "min_optimal": 7.0,
+    "max_optimal": 25.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 0.0,
+        "max_normal": 40.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 0.0,
+        "max_normal": 33.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "aspartate_aminotransferase",
+    "aliases": [
+      "AST",
+      "GOT",
+      "SGOT",
+      "Aspartate Transaminase",
+      "Glutamic-Oxaloacetic Transaminase",
+      "GOT (AST), Sangre",
+      "Serum Glutamic Oxaloacetic Transaminase",
+      "SGOT (AST)"
+    ],
+    "canonical_unit": "U/L",
+    "description": "An enzyme primarily found in the liver, heart, and muscles. Elevated levels in the blood typically indicate cellular damage in these tissues, most commonly associated with liver injury or myocardial infarction.",
+    "min_normal": 8.0,
+    "max_normal": 40.0,
+    "min_optimal": 15.0,
+    "max_optimal": 25.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 10.0,
+        "max_normal": 40.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 9.0,
+        "max_normal": 32.0,
+        "priority": 1
+      },
+      {
+        "condition": "age < 1",
+        "min_normal": 15.0,
+        "max_normal": 90.0,
+        "priority": 2
+      },
+      {
+        "condition": "age < 18",
+        "min_normal": 10.0,
+        "max_normal": 50.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "alkaline_phosphatase",
+    "aliases": [
+      "ALP",
+      "ALKP",
+      "Alk Phos",
+      "Fosfatasa Alcalina",
+      "Alkaline Phosphatase, Blood",
+      "Serum Alkaline Phosphatase",
+      "FOSFATASA ALCALINA, SANGRE"
+    ],
+    "canonical_unit": "U/L",
+    "description": "An enzyme found in high concentrations in the liver, bile ducts, and bones. It is primarily used to screen for or monitor liver disease or bone disorders.",
+    "min_normal": 40.0,
+    "max_normal": 130.0,
+    "min_optimal": 40.0,
+    "max_optimal": 100.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 12",
+        "min_normal": 150.0,
+        "max_normal": 420.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 12 and age < 18",
+        "min_normal": 100.0,
+        "max_normal": 500.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 40.0,
+        "max_normal": 130.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female' and age >= 18",
+        "min_normal": 35.0,
+        "max_normal": 105.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'male' and age >= 18",
+        "min_normal": 40.0,
+        "max_normal": 130.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "total_testosterone",
+    "aliases": [
+      "TESTOSTERONA TOTAL, SANGRE",
+      "Total Testosterone",
+      "Testosterone, Total",
+      "Serum Testosterone",
+      "Testosterona Total",
+      "TESTOSTERONE"
+    ],
+    "canonical_unit": "ng/dL",
+    "description": "The measure of the total amount of testosterone in the blood, including the portion bound to proteins (SHBG and albumin) and the free portion. It is the primary sex hormone in males and is present in smaller amounts in females.",
+    "min_normal": 264.0,
+    "max_normal": 916.0,
+    "min_optimal": 450.0,
+    "max_optimal": 800.0,
+    "peak_value": 1000.0,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 288.42,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'male' and age >= 19",
+        "min_normal": 264.0,
+        "max_normal": 916.0,
+        "priority": 10
+      },
+      {
+        "condition": "sex == 'female' and age >= 19",
+        "min_normal": 8.0,
+        "max_normal": 60.0,
+        "priority": 10
+      },
+      {
+        "condition": "sex == 'male' and age < 19",
+        "min_normal": 10.0,
+        "max_normal": 600.0,
+        "priority": 5
+      },
+      {
+        "condition": "sex == 'female' and age < 19",
+        "min_normal": 2.0,
+        "max_normal": 40.0,
+        "priority": 5
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "apolipoprotein_a1",
+    "aliases": [
+      "APOLIPOPROTEINA A-1, SANGRE",
+      "Apolipoprotein A-I",
+      "ApoA-1",
+      "ApoA1",
+      "Apolipoprote\u00edna A1"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Apolipoprotein A-1 is the primary protein component of high-density lipoprotein (HDL) particles. It plays a critical role in reverse cholesterol transport, helping to clear excess cholesterol from peripheral tissues and transporting it to the liver for excretion.",
+    "min_normal": 110.0,
+    "max_normal": 205.0,
+    "min_optimal": 140.0,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 28078.0,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 110.0,
+        "max_normal": 180.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 120.0,
+        "max_normal": 205.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "apolipoprotein_b",
+    "aliases": [
+      "ApoB",
+      "Apo-B",
+      "Apolipoprotein B-100",
+      "Apolipoprote\u00edna B",
+      "Apolipoproteina B100",
+      "APOLIPOPROTEINA B, SANGRE"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Apolipoprotein B is the primary structural protein found on the surface of all potentially atherogenic lipoprotein particles, including VLDL, IDL, and LDL. It is considered a highly accurate marker for cardiovascular risk as it represents the total number of atherogenic particles in circulation.",
+    "min_normal": 40.0,
+    "max_normal": 125.0,
+    "min_optimal": null,
+    "max_optimal": 80.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 550000.0,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 18",
+        "min_normal": 45.0,
+        "max_normal": 110.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 40.0,
+        "max_normal": 125.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "estradiol",
+    "aliases": [
+      "E2",
+      "17-beta-estradiol",
+      "Oestradiol",
+      "Estradiolo",
+      "17\u03b2-estradiol"
+    ],
+    "canonical_unit": "pg/mL",
+    "description": "The most potent and prevalent form of estrogen in the body, primarily produced by the ovaries in females and the testes and adrenal glands in males. It is critical for reproductive health, bone density, and cardiovascular function.",
+    "min_normal": 10.0,
+    "max_normal": 400.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 272.38,
+    "conversions": {
+      "pmol/L": "x * 0.27238"
+    },
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 10.0,
+        "max_normal": 40.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female' and age > 55",
+        "min_normal": 0.0,
+        "max_normal": 30.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'female' and age <= 55",
+        "min_normal": 15.0,
+        "max_normal": 350.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "selenium",
+    "aliases": [
+      "Se",
+      "Serum Selenium",
+      "Plasma Selenium",
+      "Selenio",
+      "S\u00e9l\u00e9nium"
+    ],
+    "canonical_unit": "ug/L",
+    "description": "An essential trace element that serves as a cofactor for antioxidant enzymes like glutathione peroxidase and is vital for thyroid hormone metabolism and immune function.",
+    "min_normal": 70.0,
+    "max_normal": 150.0,
+    "min_optimal": 100.0,
+    "max_optimal": 130.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 78.96,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 45.0,
+        "max_normal": 90.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1 and age < 18",
+        "min_normal": 70.0,
+        "max_normal": 130.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 70.0,
+        "max_normal": 150.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "alpha_linolenic_acid",
+    "aliases": [
+      "ALA",
+      "all-cis-9,12,15-octadecatrienoic acid",
+      "C18:3w3",
+      "C18:3n-3",
+      "Omega-3 fatty acid C18:3",
+      "Alpha-Linolens\u00e4ure",
+      "Acide alpha-linol\u00e9nique",
+      "alpha-Linolenic Acid (ALA), C18:3 w3 #"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Alpha-linolenic acid (ALA) is an essential omega-3 polyunsaturated fatty acid that must be obtained through the diet. It serves as a precursor for the synthesis of longer-chain omega-3 fatty acids, eicosapentaenoic acid (EPA) and docosahexaenoic acid (DHA).",
+    "min_normal": 0.39,
+    "max_normal": 3.2,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 278.43,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 18",
+        "min_normal": 0.28,
+        "max_normal": 3.65,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 0.39,
+        "max_normal": 3.2,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "linoleic_acid",
+    "aliases": [
+      "C18:2 w6",
+      "cis,cis-9,12-octadecadienoic acid",
+      "LA",
+      "Omega-6 fatty acid",
+      "Linoleate",
+      "C18:2n-6",
+      "Linoleic Acid, C18:2 w6 #"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "An essential omega-6 polyunsaturated fatty acid (PUFA) that must be obtained through the diet. It serves as a structural component of cell membranes and is the metabolic precursor to arachidonic acid and other eicosanoids.",
+    "min_normal": 63.66,
+    "max_normal": 107.97,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 280.45,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 9.82,
+        "max_normal": 98.16,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1 and age < 18",
+        "min_normal": 33.65,
+        "max_normal": 95.35,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 63.66,
+        "max_normal": 107.97,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "eicosapentaenoic_acid",
+    "aliases": [
+      "EPA",
+      "20:5n-3",
+      "20:5 omega-3",
+      "Timnodonic acid",
+      "Icosapentaenoic acid",
+      "C20:5 w3",
+      "Eicosapentaenoic Acid (EPA), C20:5 w3 #",
+      "AA/EPA #"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "An essential long-chain omega-3 polyunsaturated fatty acid primarily obtained from marine sources like fatty fish. It serves as a precursor for anti-inflammatory eicosanoids and is clinically monitored for cardiovascular risk reduction and the management of severe hypertriglyceridemia.",
+    "min_normal": 0.4,
+    "max_normal": 4.5,
+    "min_optimal": 3.0,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 302.45,
+    "conversions": {},
+    "reference_rules": [],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "vitamin_d_25_hydroxy",
+    "aliases": [
+      "Vitamin D 25-OH Total",
+      "25-hydroxyvitamin D",
+      "Calcidiol",
+      "25-OH Vitamin D",
+      "25-hydroxycholecalciferol",
+      "25(OH)D"
+    ],
+    "canonical_unit": "ng/mL",
+    "description": "Measures the total concentration of 25-hydroxyvitamin D (D2 and D3), the primary circulating form of vitamin D. It is the gold standard for assessing vitamin D sufficiency, reflecting intake from diet, supplements, and sun exposure.",
+    "min_normal": 30.0,
+    "max_normal": 100.0,
+    "min_optimal": 40.0,
+    "max_optimal": 60.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 400.64,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 20.0,
+        "max_normal": 100.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 1",
+        "min_normal": 30.0,
+        "max_normal": 100.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "zinc",
+    "aliases": [
+      "Zn",
+      "Serum Zinc",
+      "Plasma Zinc",
+      "Zink",
+      "Zinco",
+      "Cinc",
+      "Zincum"
+    ],
+    "canonical_unit": "ug/dL",
+    "description": "An essential trace mineral required for the catalytic activity of approximately 100 enzymes, immune function, protein synthesis, wound healing, and DNA synthesis.",
+    "min_normal": 60.0,
+    "max_normal": 120.0,
+    "min_optimal": 90.0,
+    "max_optimal": 110.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 65.38,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 70.0,
+        "max_normal": 120.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 60.0,
+        "max_normal": 120.0,
+        "priority": 2
+      },
+      {
+        "condition": "age < 18",
+        "min_normal": 60.0,
+        "max_normal": 120.0,
+        "priority": 3
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "dihomo_gamma_linolenic_acid",
+    "aliases": [
+      "DGLA",
+      "C20:3 w6",
+      "C20:3 n-6",
+      "8,11,14-eicosatrienoic acid",
+      "all-cis-8,11,14-eicosatrienoic acid",
+      "Acide dihomo-gamma-linol\u00e9nique",
+      "\u00c1cido dihomo-gamma-linol\u00e9nico",
+      "Dihomo-gamma-linolenic Acid (DGLA), C20:3 w6 #",
+      "Dihomo-gamma-linolenoc Acid (DGLA), C20:3 w6 #"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "An essential omega-6 fatty acid derived from gamma-linolenic acid (GLA). It acts as a precursor to series 1 prostaglandins (PGE1), which have anti-inflammatory properties, and can also be converted into arachidonic acid.",
+    "min_normal": 0.95,
+    "max_normal": 3.5,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 306.48,
+    "conversions": {
+      "umol/L": "x * 0.030648"
+    },
+    "reference_rules": [
+      {
+        "condition": "age >= 18",
+        "min_normal": 0.95,
+        "max_normal": 3.5,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "free_triiodothyronine",
+    "aliases": [
+      "Free T3",
+      "FT3",
+      "Triiodothyronine, Free",
+      "T3 libre",
+      "fT3"
+    ],
+    "canonical_unit": "pg/mL",
+    "description": "Free triiodothyronine (FT3) measures the unbound, biologically active form of the T3 hormone, which regulates metabolism, body temperature, and heart rate.",
+    "min_normal": 2.0,
+    "max_normal": 4.4,
+    "min_optimal": 3.0,
+    "max_optimal": 4.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 650.97,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 2.4,
+        "max_normal": 5.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1 and age < 20",
+        "min_normal": 2.3,
+        "max_normal": 5.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 20",
+        "min_normal": 2.0,
+        "max_normal": 4.4,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "vitamin_b12",
+    "aliases": [
+      "cobalamin",
+      "cyanocobalamin",
+      "methylcobalamin",
+      "vitamina b12",
+      "b12",
+      "total vitamin b12",
+      "transcobalamin"
+    ],
+    "canonical_unit": "pg/mL",
+    "description": "A water-soluble vitamin essential for DNA synthesis, neurological function, and the formation of red blood cells. It acts as a cofactor for methionine synthase and L-methylmalonyl-CoA mutase.",
+    "min_normal": 200.0,
+    "max_normal": 950.0,
+    "min_optimal": 600.0,
+    "max_optimal": 900.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 1355.37,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 160.0,
+        "max_normal": 1300.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 1 and age <= 18",
+        "min_normal": 200.0,
+        "max_normal": 1100.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "free_thyroxine",
+    "aliases": [
+      "Free T4",
+      "FT4",
+      "Thyroxine, Free",
+      "L-thyroxine free",
+      "T4 libre",
+      "Freies T4"
+    ],
+    "canonical_unit": "ng/dL",
+    "description": "Free T4 (thyroxine) is the metabolically active, unbound fraction of the primary hormone produced by the thyroid gland. It is used to assess thyroid function and diagnose hyper- or hypothyroidism.",
+    "min_normal": 0.8,
+    "max_normal": 1.8,
+    "min_optimal": 1.0,
+    "max_optimal": 1.5,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 776.87,
+    "conversions": {
+      "pmol/L": "x / 12.87"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 0.1",
+        "min_normal": 0.9,
+        "max_normal": 2.5,
+        "priority": 2
+      },
+      {
+        "condition": "age < 1",
+        "min_normal": 0.9,
+        "max_normal": 2.2,
+        "priority": 1
+      },
+      {
+        "condition": "pregnancy == True and trimester == 1",
+        "min_normal": 0.9,
+        "max_normal": 1.5,
+        "priority": 3
+      },
+      {
+        "condition": "pregnancy == True and trimester == 2",
+        "min_normal": 0.7,
+        "max_normal": 1.2,
+        "priority": 3
+      },
+      {
+        "condition": "pregnancy == True and trimester == 3",
+        "min_normal": 0.5,
+        "max_normal": 1.0,
+        "priority": 3
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "ferritin",
+    "aliases": [
+      "serum ferritin",
+      "ferritina",
+      "ferritine",
+      "ferritina s\u00e9rica",
+      "s-ferritin"
+    ],
+    "canonical_unit": "ng/mL",
+    "description": "A blood protein that stores iron in the body's cells. It is the primary diagnostic marker for total body iron stores.",
+    "min_normal": 15.0,
+    "max_normal": 300.0,
+    "min_optimal": 50.0,
+    "max_optimal": 150.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 450000.0,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 24.0,
+        "max_normal": 336.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 11.0,
+        "max_normal": 307.0,
+        "priority": 1
+      },
+      {
+        "condition": "age < 1",
+        "min_normal": 25.0,
+        "max_normal": 200.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1 and age < 18",
+        "min_normal": 7.0,
+        "max_normal": 140.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "omega_3_fatty_acids",
+    "aliases": [
+      "Omega 3 #",
+      "Total Omega-3 Fatty Acids",
+      "Omega-3 concentration",
+      "n-3 polyunsaturated fatty acids",
+      "Serum Omega-3",
+      "Plasma Omega-3",
+      "n-3 PUFA"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "The sum of the concentrations of essential omega-3 polyunsaturated fatty acids in the blood, primarily including alpha-linolenic acid (ALA), eicosapentaenoic acid (EPA), docosapentaenoic acid (DPA), and docosahexaenoic acid (DHA).",
+    "min_normal": 3.5,
+    "max_normal": 15.0,
+    "min_optimal": 10.0,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 315.0,
+    "conversions": {
+      "umol/L": "x * 0.0315"
+    },
+    "reference_rules": [],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "gamma_linolenic_acid",
+    "aliases": [
+      "GLA",
+      "C18:3 w-6",
+      "C18:3 n-6",
+      "Gamolenic acid",
+      "cis-6,9,12-octadecatrienoic acid",
+      "all-cis-6,9,12-octadecatrienoic acid",
+      "\u00c1cido gamma-linol\u00e9nico",
+      "Acide gamma-linol\u00e9nique",
+      "Gamma-Linolens\u00e4ure",
+      "gamma-Linolenic Acid (GLA), C18:3 w6 #"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "An omega-6 polyunsaturated fatty acid (18:3n-6) synthesized from linoleic acid. It serves as a precursor to dihomo-gamma-linolenic acid (DGLA), which can be converted into anti-inflammatory eicosanoids.",
+    "min_normal": 0.4,
+    "max_normal": 2.5,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 278.44,
+    "conversions": {
+      "umol/L": "x * 278.44 / 10000"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 18",
+        "min_normal": 0.19,
+        "max_normal": 2.92,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 0.4,
+        "max_normal": 2.5,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "total_calcium",
+    "aliases": [
+      "calcium",
+      "serum_calcium",
+      "ca",
+      "calcio",
+      "calcium_total",
+      "ca_total"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Total calcium measures the concentration of both free (ionized) calcium and calcium bound to proteins (primarily albumin) and anions in the blood. It is a vital indicator of bone health, parathyroid function, and kidney health.",
+    "min_normal": 8.5,
+    "max_normal": 10.5,
+    "min_optimal": 8.9,
+    "max_optimal": 10.1,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 40.078,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 8.7,
+        "max_normal": 11.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1 and age < 18",
+        "min_normal": 8.8,
+        "max_normal": 10.8,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 8.5,
+        "max_normal": 10.5,
+        "priority": 1
+      },
+      {
+        "condition": "age > 60",
+        "min_normal": 8.5,
+        "max_normal": 10.2,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "serum_iron",
+    "aliases": [
+      "Serum Iron",
+      "SI",
+      "S-Iron",
+      "Sideremia",
+      "Serum Fe",
+      "Hierro s\u00e9rico",
+      "Fer s\u00e9rique",
+      "Sierro",
+      "Eisenspiegel",
+      "Serum Iron (SI)"
+    ],
+    "canonical_unit": "ug/dL",
+    "description": "A measurement of the amount of iron in the liquid portion of the blood (serum) that is bound to transferrin.",
+    "min_normal": 50.0,
+    "max_normal": 175.0,
+    "min_optimal": 80.0,
+    "max_optimal": 130.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 55.845,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == male",
+        "min_normal": 65.0,
+        "max_normal": 175.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == female",
+        "min_normal": 50.0,
+        "max_normal": 170.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "docosahexaenoic_acid",
+    "aliases": [
+      "DHA",
+      "C22:6w3",
+      "C22:6n3",
+      "Cervonic acid",
+      "Docosahexaenoate",
+      "All-cis-docosa-4,7,10,13,16,19-hexaenoic acid",
+      "Docosahexaenoic Acid (DHA), C22:6 w3 #"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "An essential omega-3 polyunsaturated fatty acid that is a primary structural component of the human brain, cerebral cortex, skin, and retina.",
+    "min_normal": 0.98,
+    "max_normal": 8.21,
+    "min_optimal": 3.28,
+    "max_optimal": 8.21,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 328.49,
+    "conversions": {
+      "umol/L": "x * 0.032849"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 18",
+        "min_normal": 0.33,
+        "max_normal": 5.91,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 0.98,
+        "max_normal": 8.21,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "omega_6_fatty_acids",
+    "aliases": [
+      "Total Omega-6 Fatty Acids",
+      "n-6 PUFAs",
+      "Omega-6 Polyunsaturated Fatty Acids",
+      "Omega-6 #",
+      "Omega 6, Total"
+    ],
+    "canonical_unit": "umol/L",
+    "description": "The total concentration of omega-6 polyunsaturated fatty acids in the blood, primarily composed of linoleic acid (LA), arachidonic acid (AA), gamma-linolenic acid (GLA), and dihomo-gamma-linolenic acid (DGLA).",
+    "min_normal": 2395.0,
+    "max_normal": 5304.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 18",
+        "min_normal": 2100.0,
+        "max_normal": 4800.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "oleic_acid",
+    "aliases": [
+      "C18:1 w9",
+      "C18:1n-9",
+      "cis-9-Octadecenoic acid",
+      "Omega-9 fatty acid",
+      "Oleic acid (18:1n9)",
+      "\u00c1cido oleico",
+      "Acide ol\u00e9ique",
+      "\u00d6ls\u00e4ure",
+      "Oleate",
+      "Oleic Acid, C18:1 w9 #"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Oleic acid is the most abundant monounsaturated omega-9 fatty acid in human circulation. Primarily obtained through dietary sources like olive oil or synthesized from stearic acid, it is a major component of membrane phospholipids and triglycerides. It is associated with improved cardiovascular health, reduced inflammation, and maintenance of cell membrane fluidity.",
+    "min_normal": 18.36,
+    "max_normal": 98.86,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 282.46,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 7.06,
+        "max_normal": 98.86,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 1 and age < 18",
+        "min_normal": 9.89,
+        "max_normal": 98.86,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 18.36,
+        "max_normal": 98.86,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "total_polyunsaturated_fatty_acids",
+    "aliases": [
+      "Polyunsaturated #",
+      "Total PUFA",
+      "Total Polyunsaturated Fatty Acids",
+      "Polyunsaturated Fatty Acids",
+      "Total PUFAs",
+      "PUFAs"
+    ],
+    "canonical_unit": "umol/L",
+    "description": "The sum of all polyunsaturated fatty acids (PUFAs) in the blood, comprising both the omega-3 (e.g., ALA, EPA, DHA) and omega-6 (e.g., LA, ARA) series. This measurement reflects dietary fat quality, essential fatty acid status, and systemic lipid metabolism.",
+    "min_normal": 1870.0,
+    "max_normal": 4155.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 690.0,
+        "max_normal": 2540.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 1 and age < 18",
+        "min_normal": 1100.0,
+        "max_normal": 3500.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 1870.0,
+        "max_normal": 4155.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "thyroid_stimulating_hormone",
+    "aliases": [
+      "TSH",
+      "Thyrotropin",
+      "Thyroid-Stimulating Hormone",
+      "TSH Ultrasensible",
+      "TSH de alta sensibilidad",
+      "Thyrotropic hormone",
+      "S-TSH",
+      "TSH ULTRASENSIBLE, SANGRE",
+      "TSH Sensitive"
+    ],
+    "canonical_unit": "uIU/mL",
+    "description": "A glycoprotein hormone produced by the anterior pituitary gland that regulates the endocrine function of the thyroid gland, stimulating the production of thyroxine (T4) and triiodothyronine (T3).",
+    "min_normal": 0.45,
+    "max_normal": 4.5,
+    "min_optimal": 0.5,
+    "max_optimal": 2.5,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "\u00b5UI/mL": "x",
+      "mIU/L": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 0.1",
+        "min_normal": 1.0,
+        "max_normal": 15.0,
+        "priority": 3
+      },
+      {
+        "condition": "age < 1",
+        "min_normal": 0.7,
+        "max_normal": 8.0,
+        "priority": 2
+      },
+      {
+        "condition": "age > 70",
+        "min_normal": 0.4,
+        "max_normal": 6.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "arachidonic_acid",
+    "aliases": [
+      "AA",
+      "C20:4 w6",
+      "all-cis-5,8,11,14-eicosatetraenoic acid",
+      "Arachidonate",
+      "Eicosatetraenoic acid",
+      "Arachidonic Acid (AA), C20:4 w6 #"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "An essential omega-6 polyunsaturated fatty acid that serves as a key precursor for the synthesis of eicosanoids, including prostaglandins and leukotrienes, which mediate inflammatory and physiological processes.",
+    "min_normal": 12.8,
+    "max_normal": 39.1,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 304.47,
+    "conversions": {
+      "umol/L": "x * 0.030447"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 5.2,
+        "max_normal": 32.2,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1 and age < 18",
+        "min_normal": 9.4,
+        "max_normal": 36.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 12.8,
+        "max_normal": 39.1,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "gamma_glutamyl_transferase",
+    "aliases": [
+      "GGT",
+      "Gamma-GT",
+      "Gamma-glutamyl transpeptidase",
+      "GGTP",
+      "Gamma glutamil transferasa",
+      "Gamma GT",
+      "GAMMA GT (GAMMA GLUTAMIL TRANSFERASA), SANGRE"
+    ],
+    "canonical_unit": "U/L",
+    "description": "An enzyme found in high concentrations in the liver and bile ducts. It is a sensitive marker for detecting liver injury, biliary obstruction, and chronic alcohol consumption.",
+    "min_normal": 0.0,
+    "max_normal": 60.0,
+    "min_optimal": 5.0,
+    "max_optimal": 30.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "IU/L": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 8.0,
+        "max_normal": 61.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 5.0,
+        "max_normal": 36.0,
+        "priority": 1
+      },
+      {
+        "condition": "age < 18",
+        "min_normal": 0.0,
+        "max_normal": 40.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "mean_corpuscular_volume",
+    "aliases": [
+      "MCV",
+      "mean cell volume",
+      "VCM",
+      "volumen corpuscular medio",
+      "volume globulaire moyen",
+      "VGM",
+      "average red cell size"
+    ],
+    "canonical_unit": "fL",
+    "description": "A measure of the average size (volume) of a single red blood cell, primarily used to classify anemias as microcytic, normocytic, or macrocytic.",
+    "min_normal": 80.0,
+    "max_normal": 100.0,
+    "min_optimal": 85.0,
+    "max_optimal": 92.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "um3": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 0.1",
+        "min_normal": 95.0,
+        "max_normal": 121.0,
+        "priority": 3
+      },
+      {
+        "condition": "age < 0.5",
+        "min_normal": 85.0,
+        "max_normal": 105.0,
+        "priority": 2
+      },
+      {
+        "condition": "age < 12",
+        "min_normal": 75.0,
+        "max_normal": 90.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "uric_acid",
+    "aliases": [
+      "urate",
+      "acidum uricum",
+      "serum uric acid",
+      "blood uric acid",
+      "acido urico",
+      "UA",
+      "sua",
+      "acide urique",
+      "harns\u00e4ure"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "A waste product created when the body breaks down purines, which are found in some foods and are also made by the body. High levels can lead to gout or kidney stones.",
+    "min_normal": 2.5,
+    "max_normal": 7.0,
+    "min_optimal": 3.0,
+    "max_optimal": 5.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 168.11,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 3.4,
+        "max_normal": 7.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 2.4,
+        "max_normal": 6.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "glucose",
+    "aliases": [
+      "blood sugar",
+      "fasting blood glucose",
+      "fasting plasma glucose",
+      "fbg",
+      "fbs",
+      "glycemia",
+      "serum glucose",
+      "glucosa",
+      "glyc\u00e9mie",
+      "Blutzucker",
+      "\u8840\u7cd6",
+      "blood glucose",
+      "glicemia",
+      "fpg",
+      "plasma glucose",
+      "glukose",
+      "glucose sanguin"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "The primary sugar found in the blood and the body's main source of energy. Fasting glucose levels are used to screen for and monitor prediabetes and diabetes mellitus.",
+    "min_normal": 70.0,
+    "max_normal": 99.0,
+    "min_optimal": 72.0,
+    "max_optimal": 85.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 180.156,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age >= 18",
+        "min_normal": 70.0,
+        "max_normal": 99.0,
+        "priority": 1
+      },
+      {
+        "condition": "age < 1",
+        "min_normal": 40.0,
+        "max_normal": 90.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1 and age < 18",
+        "min_normal": 60.0,
+        "max_normal": 100.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "mean_corpuscular_hemoglobin_concentration",
+    "aliases": [
+      "MCHC",
+      "Mean Cell Hemoglobin Concentration",
+      "Mean Corpuscular Haemoglobin Concentration",
+      "CHCM",
+      "Concentraci\u00f3n de Hemoglobina Corpuscular Media",
+      "Concentrazione Emoglobinica Corpuscolare Media",
+      "Mittlere korpuskul\u00e4re H\u00e4moglobinkonzentration"
+    ],
+    "canonical_unit": "g/dL",
+    "description": "A measure of the average concentration of hemoglobin within a single red blood cell relative to the volume of the cell.",
+    "min_normal": 32.0,
+    "max_normal": 36.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 0.1",
+        "min_normal": 30.0,
+        "max_normal": 36.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 0.1",
+        "min_normal": 32.0,
+        "max_normal": 36.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "lipoprotein_a",
+    "aliases": [
+      "Lp(a)",
+      "Lipoprotein (a)",
+      "Lipoprote\u00edna (a)",
+      "Lipo(a)"
+    ],
+    "canonical_unit": "nmol/L",
+    "description": "A genetic variant of low-density lipoprotein (LDL) containing apolipoprotein(a), recognized as an independent, inherited risk factor for cardiovascular disease and aortic stenosis.",
+    "min_normal": 0.0,
+    "max_normal": 125.0,
+    "min_optimal": 0.0,
+    "max_optimal": 75.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "mg/dL": "x * 2.4"
+    },
+    "reference_rules": [
+      {
+        "condition": "age > 0",
+        "min_normal": 0.0,
+        "max_normal": 125.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "platelet_count",
+    "aliases": [
+      "PLT",
+      "Thrombocyte count",
+      "Platelets",
+      "Recuento de plaquetas",
+      "Plaquettes",
+      "Numera\u00e7\u00e3o de plaquetas",
+      "Piastrine",
+      "Thrombozyten"
+    ],
+    "canonical_unit": "10^9/L",
+    "description": "A quantitative measurement of the number of platelets (thrombocytes) per liter of blood, used to evaluate the body's ability to form blood clots and maintain hemostasis.",
+    "min_normal": 150.0,
+    "max_normal": 450.0,
+    "min_optimal": 150.0,
+    "max_optimal": 400.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "X10^9/L": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 0.1",
+        "min_normal": 150.0,
+        "max_normal": 450.0,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 150.0,
+        "max_normal": 450.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 150.0,
+        "max_normal": 450.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "sodium",
+    "aliases": [
+      "serum sodium",
+      "plasma sodium",
+      "natrium",
+      "sodio",
+      "Na",
+      "Na+",
+      "blood sodium"
+    ],
+    "canonical_unit": "mmol/L",
+    "description": "Sodium is the primary extracellular cation and is essential for maintaining fluid balance, osmotic pressure, and proper nerve and muscle function.",
+    "min_normal": 135.0,
+    "max_normal": 145.0,
+    "min_optimal": 138.0,
+    "max_optimal": 142.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 22.98977,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 133.0,
+        "max_normal": 146.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1",
+        "min_normal": 135.0,
+        "max_normal": 145.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "hemoglobin_a1c",
+    "aliases": [
+      "HbA1c",
+      "Glycated Hemoglobin",
+      "Glycohemoglobin",
+      "A1C",
+      "HBA1C (HPLC)",
+      "HBA1C",
+      "Hemoglobina Glicada",
+      "Glycosylated Hemoglobin",
+      "Hemoglobina glicosilada",
+      "H\u00e9moglobine glyqu\u00e9e"
+    ],
+    "canonical_unit": "%",
+    "description": "Hemoglobin A1c (HbA1c) measures the average blood glucose levels over the past 2-3 months by determining the percentage of hemoglobin in red blood cells that has glucose attached to it.",
+    "min_normal": 4.0,
+    "max_normal": 5.6,
+    "min_optimal": 4.5,
+    "max_optimal": 5.3,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "mmol/mol": "0.09148 * x + 2.152"
+    },
+    "reference_rules": [
+      {
+        "condition": "age >= 18",
+        "min_normal": 4.0,
+        "max_normal": 5.6,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "total_bilirubin",
+    "aliases": [
+      "Bilirubin",
+      "T-Bili",
+      "Total Bili",
+      "Bilirrubina total",
+      "Bilirubine totale",
+      "TBIL"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Total bilirubin is a measurement of the total amount of bilirubin in the blood, representing the sum of conjugated (direct) and unconjugated (indirect) bilirubin. It is used to evaluate liver function, bile duct patency, and red blood cell breakdown.",
+    "min_normal": 0.1,
+    "max_normal": 1.2,
+    "min_optimal": 0.3,
+    "max_optimal": 1.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 584.66,
+    "conversions": {
+      "umol/L": "x / 17.1"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 0.04",
+        "min_normal": 1.0,
+        "max_normal": 12.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 0.04",
+        "min_normal": 0.1,
+        "max_normal": 1.2,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "white_blood_cell_count",
+    "aliases": [
+      "WBC",
+      "White Blood Cells",
+      "Leukocyte Count",
+      "Leukocytes",
+      "Leucocitos",
+      "Globuli bianchi",
+      "WBC Count",
+      "Leukozit",
+      "Num\u00e9ration Formule Sanguine",
+      "Recuento de gl\u00f3bulos blancos",
+      "Nombre de globules blancs",
+      "White cell count",
+      "Leukocyte",
+      "leucocytes",
+      "gl\u00f3bulos blancos",
+      "leucociti",
+      "wei\u00dfe Blutk\u00f6rperchen",
+      "total white cell count"
+    ],
+    "canonical_unit": "10^9/L",
+    "description": "The total number of white blood cells (leukocytes) in a volume of blood, used to evaluate immune system function and identify infection, inflammation, or bone marrow disorders.",
+    "min_normal": 4.5,
+    "max_normal": 11.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "X10^9/L": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 0.1",
+        "min_normal": 9.0,
+        "max_normal": 30.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 0.1 and age < 1",
+        "min_normal": 6.0,
+        "max_normal": 17.5,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 1 and age < 13",
+        "min_normal": 4.5,
+        "max_normal": 13.5,
+        "priority": 1
+      },
+      {
+        "condition": "pregnancy == True",
+        "min_normal": 5.8,
+        "max_normal": 13.2,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "total_iron_binding_capacity",
+    "aliases": [
+      "TIBC",
+      "Total Iron-Binding Capacity",
+      "Capacidad total de fijaci\u00f3n de hierro",
+      "Capacit\u00e9 totale de fixation du fer",
+      "Totale Eisenbindungskapazit\u00e4t",
+      "Capacit\u00e0 totale di legame del ferro",
+      "Fijaci\u00f3n de hierro"
+    ],
+    "canonical_unit": "mcg/dL",
+    "description": "A measurement of the maximum amount of iron that can be bound by proteins in the blood, primarily transferrin. It is used to evaluate iron metabolism and diagnose conditions like iron-deficiency anemia or hemochromatosis.",
+    "min_normal": 250.0,
+    "max_normal": 450.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 55.845,
+    "conversions": {
+      "umol/L": "x * 5.5845"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 0.5",
+        "min_normal": 100.0,
+        "max_normal": 400.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "cystatin_c",
+    "aliases": [
+      "CysC",
+      "Cystatin-C",
+      "Post-gamma-globulin",
+      "Neuroendocrine basic polypeptide",
+      "Cistatina C"
+    ],
+    "canonical_unit": "mg/L",
+    "description": "A low-molecular-weight protein produced by all nucleated cells at a constant rate. It is filtered by the glomerulus and not reabsorbed into the bloodstream, making it a sensitive marker for estimating glomerular filtration rate (eGFR) and kidney function, independent of muscle mass.",
+    "min_normal": 0.5,
+    "max_normal": 1.0,
+    "min_optimal": null,
+    "max_optimal": 0.85,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 13343.0,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 0.8,
+        "max_normal": 2.3,
+        "priority": 2
+      },
+      {
+        "condition": "age < 18",
+        "min_normal": 0.5,
+        "max_normal": 1.2,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 50",
+        "min_normal": 0.6,
+        "max_normal": 1.2,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "eosinophils",
+    "aliases": [
+      "absolute_eosinophil_count",
+      "aec",
+      "eosinophil_count",
+      "eosin\u00f3filos",
+      "eosinophile",
+      "eosinophil_absolute",
+      "eos",
+      "EOSINOPHIL"
+    ],
+    "canonical_unit": "cells/uL",
+    "description": "A type of white blood cell (leukocyte) involved in the immune response to parasitic infections, allergic reactions, and certain inflammatory conditions.",
+    "min_normal": 0.0,
+    "max_normal": 500.0,
+    "min_optimal": 0.0,
+    "max_optimal": 100.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "X10^9/L": "x * 1000",
+      "10^9/L": "x * 1000",
+      "cells/mm3": "x",
+      "G/L": "x * 1000"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 0.0,
+        "max_normal": 700.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1",
+        "min_normal": 0.0,
+        "max_normal": 500.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "potassium",
+    "aliases": [
+      "K+",
+      "Serum Potassium",
+      "Plasma Potassium",
+      "Kalium",
+      "Potasio",
+      "Potassio",
+      "K"
+    ],
+    "canonical_unit": "mmol/L",
+    "description": "Potassium is an essential intracellular electrolyte and mineral critical for nerve impulse transmission, muscle contraction, and the maintenance of normal heart rhythm and fluid balance.",
+    "min_normal": 3.5,
+    "max_normal": 5.1,
+    "min_optimal": 4.0,
+    "max_optimal": 4.5,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 39.0983,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 3.7,
+        "max_normal": 5.9,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1 and age < 18",
+        "min_normal": 3.4,
+        "max_normal": 4.7,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 3.5,
+        "max_normal": 5.1,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "epithelial_cells",
+    "aliases": [
+      "epithelials",
+      "urine epithelial cells",
+      "squamous epithelial cells",
+      "transitional epithelial cells",
+      "renal tubular epithelial cells",
+      "c\u00e9lulas epiteliales",
+      "cellules \u00e9pith\u00e9liales"
+    ],
+    "canonical_unit": "/hpf",
+    "description": "Epithelial cells identified in urine sediment during microscopic examination. They include squamous, transitional, and renal tubular types.",
+    "min_normal": 0.0,
+    "max_normal": 5.0,
+    "min_optimal": 0.0,
+    "max_optimal": 0.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 0.0,
+        "max_normal": 10.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 0.0,
+        "max_normal": 2.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "mean_corpuscular_hemoglobin",
+    "aliases": [
+      "MCH",
+      "Mean Cell Hemoglobin",
+      "HCM",
+      "Hemoglobina Corpuscular Media",
+      "Average Erythrocyte Hemoglobin"
+    ],
+    "canonical_unit": "pg",
+    "description": "A measurement of the average amount of hemoglobin contained within a single red blood cell.",
+    "min_normal": 27.0,
+    "max_normal": 33.0,
+    "min_optimal": 28.0,
+    "max_optimal": 32.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 64458.0,
+    "conversions": {
+      "fmol": "x / 0.06206"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 30.0,
+        "max_normal": 37.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1",
+        "min_normal": 27.0,
+        "max_normal": 33.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "urea",
+    "aliases": [
+      "blood_urea",
+      "serum_urea",
+      "carbamide",
+      "ureia",
+      "ur\u00e9e",
+      "harnstoff",
+      "urea_nitrogen",
+      "urea_nitrogen_total"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "A nitrogenous byproduct of protein metabolism formed in the liver and excreted by the kidneys. It is a key marker of renal function and protein breakdown.",
+    "min_normal": 15.0,
+    "max_normal": 45.0,
+    "min_optimal": 20.0,
+    "max_optimal": 35.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 60.06,
+    "conversions": {
+      "mmol/L": "x * 6.006"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 18",
+        "min_normal": 10.0,
+        "max_normal": 40.0,
+        "priority": 1
+      },
+      {
+        "condition": "age > 65",
+        "min_normal": 15.0,
+        "max_normal": 50.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == female",
+        "min_normal": 15.0,
+        "max_normal": 43.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "inorganic_phosphate",
+    "aliases": [
+      "Phosphorus",
+      "Inorganic phosphorus",
+      "Serum Phosphate",
+      "PO4",
+      "Fosfato",
+      "Fosfato inorg\u00e1nico",
+      "Phosphate"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Inorganic phosphate (measured as phosphorus) is a vital mineral used by the body for energy production (ATP), bone and teeth formation, and cell membrane integrity.",
+    "min_normal": 2.5,
+    "max_normal": 4.5,
+    "min_optimal": 3.0,
+    "max_optimal": 4.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 30.974,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 4.5,
+        "max_normal": 6.7,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1 and age <= 12",
+        "min_normal": 4.5,
+        "max_normal": 5.5,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 13 and age <= 17",
+        "min_normal": 3.3,
+        "max_normal": 5.4,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 2.5,
+        "max_normal": 4.5,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "hemoglobin",
+    "aliases": [
+      "Hb",
+      "Hgb",
+      "Haemoglobin",
+      "Hemoglobina",
+      "H\u00e9moglobine",
+      "Total Hemoglobin"
+    ],
+    "canonical_unit": "g/dL",
+    "description": "The iron-containing protein in red blood cells responsible for transporting oxygen from the lungs to the rest of the body.",
+    "min_normal": 12.0,
+    "max_normal": 17.5,
+    "min_optimal": 13.5,
+    "max_optimal": 16.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 64458.0,
+    "conversions": {
+      "mmol/L": "x * 1.611"
+    },
+    "reference_rules": [
+      {
+        "condition": "sex == \"male\"",
+        "min_normal": 13.5,
+        "max_normal": 17.5,
+        "priority": 10
+      },
+      {
+        "condition": "sex == \"female\"",
+        "min_normal": 12.0,
+        "max_normal": 15.5,
+        "priority": 10
+      },
+      {
+        "condition": "age < 18",
+        "min_normal": 11.0,
+        "max_normal": 15.0,
+        "priority": 20
+      },
+      {
+        "condition": "age < 1",
+        "min_normal": 9.5,
+        "max_normal": 13.5,
+        "priority": 30
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "basophils",
+    "aliases": [
+      "basophil count",
+      "absolute basophil count",
+      "basos",
+      "baso#",
+      "bas\u00f3filos",
+      "basophile count",
+      "basophile granulocytes",
+      "bas\u00f3filos absolutos",
+      "basofili",
+      "BASOPHIL",
+      "basophils_absolute_count",
+      "basophiles",
+      "basophiles absolus",
+      "basophile granulozyten"
+    ],
+    "canonical_unit": "10^9/L",
+    "description": "A type of white blood cell (granulocyte) involved in the immune response to allergens and parasites, responsible for releasing inflammatory mediators like histamine.",
+    "min_normal": 0.0,
+    "max_normal": 0.1,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "X10^9/L": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 0.1",
+        "min_normal": 0.0,
+        "max_normal": 0.6,
+        "priority": 1
+      },
+      {
+        "condition": "age < 1",
+        "min_normal": 0.0,
+        "max_normal": 0.3,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "hematocrit",
+    "aliases": [
+      "PCV",
+      "packed cell volume",
+      "HCT",
+      "Ht",
+      "hematocrito",
+      "erythrocyte volume fraction",
+      "volume de l'h\u00e9matocrite",
+      "PCV (HCT)"
+    ],
+    "canonical_unit": "%",
+    "description": "The proportion of the total volume of blood that is occupied by red blood cells. It is a key indicator of hydration status and red blood cell production or loss.",
+    "min_normal": 36.0,
+    "max_normal": 52.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "L/L": "x * 100",
+      "fraction": "x * 100"
+    },
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 40.0,
+        "max_normal": 52.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 36.0,
+        "max_normal": 48.0,
+        "priority": 1
+      },
+      {
+        "condition": "age < 18",
+        "min_normal": 32.0,
+        "max_normal": 44.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "globulin",
+    "aliases": [
+      "Globulins",
+      "Serum Globulin",
+      "Total Globulin",
+      "Globulina",
+      "S-Globulin"
+    ],
+    "canonical_unit": "g/dL",
+    "description": "Globulins are a group of proteins in the blood that include enzymes, antibodies, and more than 500 other proteins. They are categorized into alpha, beta, and gamma globulins and are vital for liver function, blood clotting, and immune response.",
+    "min_normal": 2.0,
+    "max_normal": 3.5,
+    "min_optimal": 2.3,
+    "max_optimal": 2.8,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age >= 18",
+        "min_normal": 2.0,
+        "max_normal": 3.5,
+        "priority": 1
+      },
+      {
+        "condition": "age < 18",
+        "min_normal": 1.6,
+        "max_normal": 3.3,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "hs_c_reactive_protein",
+    "aliases": [
+      "hs-CRP",
+      "high-sensitivity C-reactive protein",
+      "ultra-sensitive CRP",
+      "PCR ultrasensible",
+      "PCR-us",
+      "CRP-hs",
+      "hsCRP"
+    ],
+    "canonical_unit": "mg/L",
+    "description": "A high-sensitivity measure of C-reactive protein used to evaluate low-grade systemic inflammation and assess risk for cardiovascular disease.",
+    "min_normal": 0.0,
+    "max_normal": 3.0,
+    "min_optimal": 0.0,
+    "max_optimal": 1.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 115131.0,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "x < 1.0",
+        "min_normal": 0.0,
+        "max_normal": 1.0,
+        "priority": 1
+      },
+      {
+        "condition": "1.0 <= x <= 3.0",
+        "min_normal": 1.0,
+        "max_normal": 3.0,
+        "priority": 1
+      },
+      {
+        "condition": "x > 3.0",
+        "min_normal": 0.0,
+        "max_normal": 3.0,
+        "priority": 1
+      },
+      {
+        "condition": "x > 10.0",
+        "min_normal": null,
+        "max_normal": 10.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "non_hdl_cholesterol",
+    "aliases": [
+      "Non-HDL Cholesterol",
+      "Non-HDL-C",
+      "Non-high-density lipoprotein cholesterol",
+      "Cholesterol non-HDL",
+      "Colesterol no-HDL",
+      "Calculated non-HDL cholesterol",
+      "Atherogenic cholesterol"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "Non-HDL cholesterol (Non-HDL-C) represents the sum of cholesterol carried by all atherogenic, apolipoprotein B-containing lipoproteins, including LDL, VLDL, IDL, and Lp(a). It is clinically used as a robust predictor of cardiovascular risk and is typically calculated as Total Cholesterol minus HDL Cholesterol, though direct assays also exist.",
+    "min_normal": null,
+    "max_normal": 130.0,
+    "min_optimal": null,
+    "max_optimal": 100.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 386.65,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 20",
+        "min_normal": null,
+        "max_normal": 120.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 20",
+        "min_normal": null,
+        "max_normal": 130.0,
+        "priority": 0
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "lymphocyte_absolute_count",
+    "aliases": [
+      "Lymphocytes",
+      "Lymphs",
+      "Linfocitos",
+      "Linf\u00f3citos",
+      "Linfociti",
+      "Lymfozyten",
+      "Absolute Lymphocyte Count",
+      "ALC",
+      "Lymphocyte Count",
+      "LYMPHOCYTE",
+      "Lym",
+      "Lymphozyten"
+    ],
+    "canonical_unit": "10^9/L",
+    "description": "A subset of white blood cells (leukocytes) that play a central role in the immune system, including T cells, B cells, and natural killer cells, responsible for identifying and eliminating pathogens and abnormal cells.",
+    "min_normal": 1.0,
+    "max_normal": 4.8,
+    "min_optimal": 1.5,
+    "max_optimal": 3.5,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "X10^9/L": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 2.0,
+        "max_normal": 11.0,
+        "priority": 10
+      },
+      {
+        "condition": "age < 6",
+        "min_normal": 1.5,
+        "max_normal": 7.0,
+        "priority": 8
+      },
+      {
+        "condition": "age < 12",
+        "min_normal": 1.0,
+        "max_normal": 5.0,
+        "priority": 6
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "homocysteine",
+    "aliases": [
+      "hcy",
+      "total homocysteine",
+      "thcy",
+      "homocisteina",
+      "homocyste\u00edna",
+      "homocyst\u00e9ine",
+      "homocystein"
+    ],
+    "canonical_unit": "umol/L",
+    "description": "An amino acid produced during the metabolism of methionine. Elevated levels are an independent risk factor for cardiovascular disease, venous thrombosis, and neurodegenerative conditions.",
+    "min_normal": 5.0,
+    "max_normal": 15.0,
+    "min_optimal": 5.0,
+    "max_optimal": 9.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 135.18,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 15",
+        "min_normal": 3.0,
+        "max_normal": 10.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 60",
+        "min_normal": 5.0,
+        "max_normal": 20.0,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 4.5,
+        "max_normal": 13.5,
+        "priority": 2
+      },
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 5.4,
+        "max_normal": 16.2,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "neutrophils",
+    "aliases": [
+      "Absolute Neutrophil Count",
+      "ANC",
+      "Neutrophil Count",
+      "Neutr\u00f3filos",
+      "Neutrophiles",
+      "Polymorphonuclear Neutrophils",
+      "PMNs",
+      "Segmented Neutrophils",
+      "Neutros",
+      "NEUTROPHIL",
+      "Polymorphonuclear Leukocytes",
+      "Neutr\u00f2fils"
+    ],
+    "canonical_unit": "10^9/L",
+    "description": "Neutrophils are the most abundant type of white blood cell (leukocyte) and serve as the first line of defense in the innate immune system, primarily responding to bacterial infections and tissue injury through phagocytosis and the release of antimicrobial enzymes.",
+    "min_normal": 1.5,
+    "max_normal": 8.0,
+    "min_optimal": 2.0,
+    "max_optimal": 6.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "cells/uL": "x / 1000",
+      "/uL": "x / 1000",
+      "X10^9/L": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 1.0,
+        "max_normal": 9.0,
+        "priority": 1
+      },
+      {
+        "condition": "ethnicity == 'african_descent'",
+        "min_normal": 1.2,
+        "max_normal": 8.0,
+        "priority": 2
+      },
+      {
+        "condition": "ethnicity == 'middle_eastern_descent'",
+        "min_normal": 1.2,
+        "max_normal": 8.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "bilirubin",
+    "aliases": [
+      "Total Bilirubin",
+      "TBIL",
+      "Bilirubina",
+      "Bilirubine",
+      "Bilirrubina",
+      "Bili"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "A yellow-orange pigment formed during the normal breakdown of red blood cells. It is processed by the liver and eventually excreted in the bile and stool. Total bilirubin levels represent the sum of conjugated (direct) and unconjugated (indirect) bilirubin.",
+    "min_normal": 0.1,
+    "max_normal": 1.2,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 584.66,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age >= 18",
+        "min_normal": 0.1,
+        "max_normal": 1.2,
+        "priority": 1
+      },
+      {
+        "condition": "age < 18 and age >= 1",
+        "min_normal": 0.1,
+        "max_normal": 1.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "prostate_specific_antigen",
+    "aliases": [
+      "Total PSA",
+      "PSA",
+      "Prostate-Specific Antigen",
+      "Ant\u00edgeno prost\u00e1tico espec\u00edfico",
+      "Antig\u00e8ne prostatique sp\u00e9cifique",
+      "Prostata-spezifisches Antigen"
+    ],
+    "canonical_unit": "ng/mL",
+    "description": "A glycoprotein enzyme produced by the epithelial cells of the prostate gland. It is used as a clinical marker for prostate cancer and other prostatic conditions such as benign prostatic hyperplasia (BPH).",
+    "min_normal": 0.0,
+    "max_normal": 4.0,
+    "min_optimal": 0.0,
+    "max_optimal": 1.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "sex == 'male' and age < 50",
+        "min_normal": 0.0,
+        "max_normal": 2.5,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'male' and age >= 50 and age < 60",
+        "min_normal": 0.0,
+        "max_normal": 3.5,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'male' and age >= 60 and age < 70",
+        "min_normal": 0.0,
+        "max_normal": 4.5,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'male' and age >= 70",
+        "min_normal": 0.0,
+        "max_normal": 6.5,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 0.0,
+        "max_normal": 0.01,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "folate",
+    "aliases": [
+      "Folic Acid",
+      "Vitamin B9",
+      "Serum Folate",
+      "Pteroylglutamic acid",
+      "Folato"
+    ],
+    "canonical_unit": "ng/mL",
+    "description": "Folate is a B-vitamin (B9) essential for DNA synthesis, repair, and methylation, as well as the production and maintenance of new cells, particularly red blood cells.",
+    "min_normal": 4.0,
+    "max_normal": 20.0,
+    "min_optimal": 10.0,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 441.4,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age >= 0",
+        "min_normal": 4.0,
+        "max_normal": 20.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "red_blood_cell_count",
+    "aliases": [
+      "RBC",
+      "erythrocyte count",
+      "red blood cells",
+      "red cell count",
+      "GR",
+      "recuento de eritrocitos",
+      "h\u00e9maties",
+      "Erythrozyten"
+    ],
+    "canonical_unit": "10^12/L",
+    "description": "A count of the actual number of red blood cells per volume of blood, used to evaluate the blood's capacity to transport oxygen to tissues.",
+    "min_normal": 3.9,
+    "max_normal": 5.7,
+    "min_optimal": 4.2,
+    "max_optimal": 5.4,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "X10^12/L": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 4.35,
+        "max_normal": 5.65,
+        "priority": 10
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 3.92,
+        "max_normal": 5.13,
+        "priority": 10
+      },
+      {
+        "condition": "age < 18",
+        "min_normal": 4.0,
+        "max_normal": 5.5,
+        "priority": 5
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "albumin",
+    "aliases": [
+      "Serum Albumin",
+      "ALB",
+      "Albumina",
+      "Albumine",
+      "Albuminwert",
+      "S-Albumin"
+    ],
+    "canonical_unit": "g/dL",
+    "description": "Albumin is the most abundant protein in human plasma, synthesized by the liver. It maintains osmotic pressure to prevent fluid leakage from blood vessels and transports various hormones, vitamins, and drugs throughout the body.",
+    "min_normal": 3.4,
+    "max_normal": 5.4,
+    "min_optimal": 4.2,
+    "max_optimal": 4.9,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 66463.0,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 0.1",
+        "min_normal": 2.8,
+        "max_normal": 4.4,
+        "priority": 3
+      },
+      {
+        "condition": "age >= 0.1 and age < 18",
+        "min_normal": 3.8,
+        "max_normal": 5.4,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 3.4,
+        "max_normal": 5.4,
+        "priority": 1
+      },
+      {
+        "condition": "age > 60",
+        "min_normal": 3.2,
+        "max_normal": 4.6,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "creatinine",
+    "aliases": [
+      "serum_creatinine",
+      "crea",
+      "creatinina",
+      "creatinin",
+      "cr"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "A waste product produced by the normal breakdown of muscle tissue. It is filtered from the blood by the kidneys and excreted in the urine, making it a key indicator of renal function.",
+    "min_normal": 0.6,
+    "max_normal": 1.3,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 113.12,
+    "conversions": {
+      "umol/l": "x / 88.4"
+    },
+    "reference_rules": [
+      {
+        "condition": "sex == 'male'",
+        "min_normal": 0.7,
+        "max_normal": 1.3,
+        "priority": 1
+      },
+      {
+        "condition": "sex == 'female'",
+        "min_normal": 0.6,
+        "max_normal": 1.1,
+        "priority": 1
+      },
+      {
+        "condition": "age < 3",
+        "min_normal": 0.1,
+        "max_normal": 0.4,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 3 and age < 13",
+        "min_normal": 0.2,
+        "max_normal": 0.7,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 13 and age < 18",
+        "min_normal": 0.5,
+        "max_normal": 1.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "monocytes",
+    "aliases": [
+      "Monocytes",
+      "Monocitos",
+      "Monocyten",
+      "Monociti",
+      "Absolute Monocyte Count",
+      "AMC",
+      "Mono #",
+      "Monocyte Percentage",
+      "Monocyte %",
+      "monocyte_absolute_count",
+      "Monocyte count",
+      "Absolute Monocytes",
+      "Monozite"
+    ],
+    "canonical_unit": "cells_per_microliter",
+    "description": "Monocytes are the largest type of white blood cell (leukocyte) in the human body. They circulate in the blood for a few days before migrating into tissues to differentiate into macrophages and dendritic cells, where they play a primary role in the innate immune response, phagocytosis, and the initiation of adaptive immunity.",
+    "min_normal": 200.0,
+    "max_normal": 950.0,
+    "min_optimal": 200.0,
+    "max_optimal": 400.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "X10^9/L": "x * 1000"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 0.04",
+        "min_normal": 400.0,
+        "max_normal": 1800.0,
+        "priority": 2
+      },
+      {
+        "condition": "age < 1",
+        "min_normal": 300.0,
+        "max_normal": 1100.0,
+        "priority": 1
+      },
+      {
+        "condition": "age < 5",
+        "min_normal": 275.0,
+        "max_normal": 850.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 200.0,
+        "max_normal": 950.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "estimated_glomerular_filtration_rate",
+    "aliases": [
+      "eGFR",
+      "GFR",
+      "Estimated GFR",
+      "Glomerular Filtration Rate",
+      "TFG",
+      "Tasa de Filtraci\u00f3n Glomerular",
+      "DFG",
+      "D\u00e9bit de Filtration Glom\u00e9rulaire"
+    ],
+    "canonical_unit": "mL/min/1.73m2",
+    "description": "A calculation that estimates how well the kidneys filter waste from the blood, normalized to a standard body surface area of 1.73 square meters. It is the primary clinical tool for diagnosing and staging chronic kidney disease (CKD).",
+    "min_normal": 60.0,
+    "max_normal": null,
+    "min_optimal": 90.0,
+    "max_optimal": null,
+    "peak_value": 120.0,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {
+      "ML/MIN": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 40",
+        "min_normal": 90.0,
+        "max_normal": null,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 60.0,
+        "max_normal": null,
+        "priority": 0
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "total_protein",
+    "aliases": [
+      "Protein",
+      "Serum Protein",
+      "TP",
+      "Prote\u00edna Total",
+      "Prote\u00ednas Totales",
+      "Gesamteiwei\u00df",
+      "Prot\u00e9ines Totales",
+      "Serum Total Protein",
+      "Total Serum Protein",
+      "S-PROT"
+    ],
+    "canonical_unit": "g/dL",
+    "description": "A measurement of the combined amount of albumin and globulins in the serum or plasma. It is used to assess nutritional status and screen for disorders of the liver, kidneys, or bone marrow.",
+    "min_normal": 6.0,
+    "max_normal": 8.3,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 0.1",
+        "min_normal": 4.6,
+        "max_normal": 7.0,
+        "priority": 2
+      },
+      {
+        "condition": "age < 1",
+        "min_normal": 4.4,
+        "max_normal": 7.6,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 1",
+        "min_normal": 6.0,
+        "max_normal": 8.3,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "cortisol",
+    "aliases": [
+      "hydrocortisone",
+      "compound F",
+      "17-hydroxycorticosterone",
+      "cortisol_serico",
+      "cortisol_plasmatico",
+      "hydrocortisonum"
+    ],
+    "canonical_unit": "ug/dL",
+    "description": "A steroid hormone (glucocorticoid) produced by the adrenal cortex that regulates metabolism, immune response, and the body's response to stress. It exhibits a significant diurnal rhythm.",
+    "min_normal": 5.0,
+    "max_normal": 23.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 362.46,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "time == 'morning'",
+        "min_normal": 5.0,
+        "max_normal": 23.0,
+        "priority": 1
+      },
+      {
+        "condition": "time == 'afternoon'",
+        "min_normal": 3.0,
+        "max_normal": 13.0,
+        "priority": 1
+      },
+      {
+        "condition": "time == 'midnight'",
+        "min_normal": 0.0,
+        "max_normal": 1.8,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "urobilinogen",
+    "aliases": [
+      "urobilin\u00f3geno",
+      "urobilinog\u00e8ne",
+      "UBG",
+      "urine urobilinogen",
+      "ehrlich units",
+      "urobilinogen, urine"
+    ],
+    "canonical_unit": "mg/dL",
+    "description": "A colorless byproduct of bilirubin reduction formed in the intestines by bacterial action. Most urobilinogen is excreted in feces, but approximately 10-15% is reabsorbed into the portal circulation and subsequently excreted by the kidneys.",
+    "min_normal": 0.1,
+    "max_normal": 1.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 592.72,
+    "conversions": {
+      "Ehrlich unit/dL": "x",
+      "EU/dL": "x",
+      "Ehrlich unit/100mL": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "age >= 0",
+        "min_normal": 0.1,
+        "max_normal": 1.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "insulin",
+    "aliases": [
+      "fasting_insulin",
+      "immunoreactive_insulin",
+      "IRI",
+      "serum_insulin",
+      "insulina"
+    ],
+    "canonical_unit": "mIU/L",
+    "description": "A peptide hormone produced by the beta cells of the pancreatic islets that regulates carbohydrate and fat metabolism by promoting the absorption of glucose from the blood.",
+    "min_normal": 2.6,
+    "max_normal": 24.9,
+    "min_optimal": 2.0,
+    "max_optimal": 5.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 5807.57,
+    "conversions": {
+      "pmol/L": "x / 6.945",
+      "MU/L": "x"
+    },
+    "reference_rules": [
+      {
+        "condition": "age < 12",
+        "min_normal": 2.0,
+        "max_normal": 20.0,
+        "priority": 2
+      },
+      {
+        "condition": "fasting == false",
+        "min_normal": null,
+        "max_normal": null,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "red_cell_distribution_width",
+    "aliases": [
+      "RDW",
+      "RDW-CV",
+      "Red Cell Distribution Width",
+      "Anisocytosis Index",
+      "Erythrocyte Distribution Width",
+      "Amplitud de distribuci\u00f3n eritrocitaria",
+      "RDW VALUE"
+    ],
+    "canonical_unit": "%",
+    "description": "A measure of the variation in red blood cell volume (size) and a standard component of a complete blood count (CBC). Higher values indicate greater variation in cell size, known as anisocytosis.",
+    "min_normal": 11.5,
+    "max_normal": 14.5,
+    "min_optimal": 11.5,
+    "max_optimal": 13.0,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 12.0,
+        "max_normal": 18.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 1 and age < 18",
+        "min_normal": 11.5,
+        "max_normal": 15.0,
+        "priority": 1
+      },
+      {
+        "condition": "age >= 18",
+        "min_normal": 11.5,
+        "max_normal": 14.5,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "chloride",
+    "aliases": [
+      "Cl",
+      "Cl-",
+      "Serum Chloride",
+      "Chloride ion",
+      "Cloro",
+      "Chlore",
+      "Chlorid"
+    ],
+    "canonical_unit": "mmol/L",
+    "description": "Chloride is an essential electrolyte and the major extracellular anion. It works alongside sodium and potassium to maintain osmotic pressure, fluid balance, and acid-base status (pH) in the body.",
+    "min_normal": 96.0,
+    "max_normal": 106.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 35.45,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "age < 1",
+        "min_normal": 96.0,
+        "max_normal": 113.0,
+        "priority": 2
+      },
+      {
+        "condition": "age >= 1",
+        "min_normal": 96.0,
+        "max_normal": 106.0,
+        "priority": 1
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "blood_ph",
+    "aliases": [
+      "pH",
+      "Arterial Blood pH",
+      "Venous Blood pH",
+      "Blood Acidity",
+      "Potentia Hydrogenii"
+    ],
+    "canonical_unit": "pH",
+    "description": "A measurement of the acidity or alkalinity of the blood, representing the concentration of hydrogen ions. It is critical for maintaining homeostatic enzymatic and metabolic functions.",
+    "min_normal": 7.35,
+    "max_normal": 7.45,
+    "min_optimal": 7.38,
+    "max_optimal": 7.42,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": null,
+    "conversions": {},
+    "reference_rules": [
+      {
+        "condition": "specimen == 'arterial'",
+        "min_normal": 7.35,
+        "max_normal": 7.45,
+        "priority": 1
+      },
+      {
+        "condition": "specimen == 'venous'",
+        "min_normal": 7.31,
+        "max_normal": 7.41,
+        "priority": 2
+      },
+      {
+        "condition": "age < 0.08",
+        "min_normal": 7.26,
+        "max_normal": 7.41,
+        "priority": 3
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  },
+  {
+    "id": "insulin_like_growth_factor_1",
+    "aliases": [
+      "IGF-1",
+      "IGF1",
+      "Somatomedin C",
+      "Insulin-like growth factor I",
+      "IGF-I"
+    ],
+    "canonical_unit": "ng/mL",
+    "description": "A hormone similar in molecular structure to insulin which plays an important role in childhood growth and continues to have anabolic effects in adults. It is primarily produced by the liver in response to growth hormone (GH) stimulation.",
+    "min_normal": 50.0,
+    "max_normal": 350.0,
+    "min_optimal": null,
+    "max_optimal": null,
+    "peak_value": null,
+    "value_type": "quantitative",
+    "enum_values": null,
+    "molar_mass_g_per_mol": 7649.0,
+    "conversions": {
+      "nmol/L": "x * 7.649"
+    },
+    "reference_rules": [
+      {
+        "condition": "age >= 18 and age <= 30",
+        "min_normal": 115.0,
+        "max_normal": 350.0,
+        "priority": 1
+      },
+      {
+        "condition": "age > 30 and age <= 50",
+        "min_normal": 70.0,
+        "max_normal": 250.0,
+        "priority": 1
+      },
+      {
+        "condition": "age > 50 and age <= 70",
+        "min_normal": 60.0,
+        "max_normal": 200.0,
+        "priority": 1
+      },
+      {
+        "condition": "age > 70",
+        "min_normal": 50.0,
+        "max_normal": 180.0,
+        "priority": 1
+      },
+      {
+        "condition": "age < 18",
+        "min_normal": 50.0,
+        "max_normal": 500.0,
+        "priority": 2
+      }
+    ],
+    "source": "research-agent-gemini",
+    "normal_values": null
+  }
+]

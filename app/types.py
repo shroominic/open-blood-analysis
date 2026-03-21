@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ReferenceRangeRule(BaseModel):
@@ -67,6 +67,26 @@ class BiomarkerEntry(BaseModel):
     # For qualitative biomarkers (e.g. "Negative", "Positive")
     # If set, any value in this list is considered Normal. Any value NOT in this list is High/Abnormal.
     normal_values: list[str] | None = None
+
+    @model_validator(mode="after")
+    def _validate_ranges(self) -> "BiomarkerEntry":
+        if (
+            self.min_normal is not None
+            and self.max_normal is not None
+            and self.min_normal > self.max_normal
+        ):
+            raise ValueError(
+                f"min_normal ({self.min_normal}) must be <= max_normal ({self.max_normal})"
+            )
+        if (
+            self.min_optimal is not None
+            and self.max_optimal is not None
+            and self.min_optimal > self.max_optimal
+        ):
+            raise ValueError(
+                f"min_optimal ({self.min_optimal}) must be <= max_optimal ({self.max_optimal})"
+            )
+        return self
 
 
 class ExtractedBiomarker(BaseModel):

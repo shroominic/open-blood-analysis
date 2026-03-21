@@ -280,7 +280,21 @@ def analyze_value(
         # Sort by priority - higher priority rules apply later (overriding earlier ones)
         sorted_rules = sorted(entry.reference_rules, key=lambda r: r.priority)
 
+        _UNREACHABLE_DEMOGRAPHICS = {"pregnancy", "trimester", "has_heart_disease", "statins"}
+
         for rule in sorted_rules:
+            referenced_unreachable = {
+                var for var in _UNREACHABLE_DEMOGRAPHICS
+                if re.search(rf"\b{var}\b", rule.condition)
+            }
+            if referenced_unreachable:
+                logger.info(
+                    "Reference rule for '%s' uses demographics not settable via CLI: %s (condition: %s)",
+                    entry.id,
+                    ", ".join(sorted(referenced_unreachable)),
+                    rule.condition,
+                )
+
             if age is None and _references_age(rule.condition):
                 # Age-specific rule cannot be evaluated without age context.
                 continue
@@ -330,7 +344,9 @@ def analyze_value(
         else:
             reference_status = "normal"
 
-        if isinstance(final_val, (int, float)):
+        if reference_status == "unknown":
+            optimal_status = "unknown"
+        elif isinstance(final_val, (int, float)):
             if min_optimal is None and max_optimal is None:
                 optimal_status = "not_applicable"
             elif min_optimal is not None and final_val < min_optimal:

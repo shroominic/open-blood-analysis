@@ -3,7 +3,7 @@ import logging
 from typing import Any, List, Literal
 
 from .config import Config
-from .ai_client import build_ai_client
+from .ai_client import AIClient, build_ai_client, retry_async
 from .types import BiomarkerEntry
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,8 @@ def _extract_json_payload(content: str) -> str:
 
 
 async def disambiguate_biomarker(
-    raw_name: str, candidates: List[tuple[BiomarkerEntry, str, float]], config: Config
+    raw_name: str, candidates: List[tuple[BiomarkerEntry, str, float]], config: Config,
+    client: AIClient | None = None,
 ) -> tuple[Literal["match", "research", "unknown"], BiomarkerEntry | None]:
     """
     Use AI to decide between fuzzy candidates.
@@ -47,7 +48,8 @@ async def disambiguate_biomarker(
     - "research": AI says research a new entry
     - "unknown": AI says mark as unknown / skip
     """
-    client = build_ai_client(config)
+    if client is None:
+        client = build_ai_client(config)
 
     candidates_text = "\n".join(
         [
@@ -82,7 +84,8 @@ Strict safety rules:
 Respond with ONLY valid JSON, no explanation."""
 
     try:
-        content = await client.prompt_json(
+        content = await retry_async(
+            client.prompt_json,
             model=config.ocr,  # Use faster model for this
             prompt=prompt,
         )
@@ -117,11 +120,13 @@ async def think_unit_conversion(
     canonical_unit: str,
     observed_value: float | str | bool,
     config: Config,
+    client: AIClient | None = None,
 ) -> dict | None:
     """
     Ask the thinking model to propose a conversion formula in strict JSON.
     """
-    client = build_ai_client(config)
+    if client is None:
+        client = build_ai_client(config)
 
     prompt = f"""
     You are a unit-conversion assistant for a blood biomarker pipeline.
@@ -198,11 +203,13 @@ async def recommend_binary_decision(
     question: str,
     context: dict[str, Any],
     config: Config,
+    client: AIClient | None = None,
 ) -> dict[str, Any] | None:
     """
     Ask the thinking model for a strict yes/no recommendation in JSON.
     """
-    client = build_ai_client(config)
+    if client is None:
+        client = build_ai_client(config)
     context_json = json.dumps(context, ensure_ascii=False, sort_keys=True)
     prompt = f"""
     You are a cautious reviewer for a blood biomarker automation pipeline.
@@ -246,11 +253,13 @@ async def recommend_merge_decision(
     existing_entry: BiomarkerEntry,
     observed_raw_name: str,
     config: Config,
+    client: AIClient | None = None,
 ) -> dict[str, Any] | None:
     """
     Ask the thinking model for a highly conservative merge/no-merge recommendation.
     """
-    client = build_ai_client(config)
+    if client is None:
+        client = build_ai_client(config)
     context = {
         "observed_raw_name": observed_raw_name,
         "new_entry": new_entry.model_dump(),
@@ -308,12 +317,14 @@ async def recommend_merge_decision(
 
 
 async def research_biomarker(
-    biomarker_name: str, config: Config, extracted_unit: str | None = None
+    biomarker_name: str, config: Config, extracted_unit: str | None = None,
+    client: AIClient | None = None,
 ) -> BiomarkerEntry | None:
     """
     Pipeline step: Unknown Name -> Provider research synthesis -> New Biomarker Schema
     """
-    client = build_ai_client(config)
+    if client is None:
+        client = build_ai_client(config)
 
     unit_context = ""
     if extracted_unit:
@@ -368,7 +379,9 @@ async def research_biomarker(
     DEMOGRAPHIC RULES:
     1. Use "reference_rules" for demographic-specific ranges (e.g., sex, age).
     2. Conditions use Python-like syntax: 'sex == male', 'sex == female', 'age > 50', 'age < 18'.
-    3. Always provide a base min_normal/max_normal for the general population if possible.
+    3. Compound conditions are supported using 'and'/'or': 'sex == male and age > 50', 'sex == female and age < 18'.
+    4. Use a single compound rule instead of separate rules when both sex and age together define a specific range.
+    5. Always provide a base min_normal/max_normal for the general population if possible.
 
     OPTIMAL / PEAK RULES:
     1. "min_optimal"/"max_optimal" should represent a stricter longevity-focused target range.
@@ -406,7 +419,8 @@ async def research_biomarker(
             config.research,
         )
 
-        content = await client.prompt_json_with_search(
+        content = await retry_async(
+            client.prompt_json_with_search,
             model=config.research,
             prompt=prompt,
         )
