@@ -25,11 +25,12 @@ from rich.progress import (
 )
 
 from .config import Config
+from .ai_client import build_ai_client
 from .types import AnalyzedBiomarker, BiomarkerEntry, ExtractedBiomarker, ReportMetadata
 from . import database as db
 from . import loader
-from . import llm
 from . import agent as research_agent
+from .extraction import extract_report
 from . import logic
 
 app = typer.Typer(help="Open Blood Analysis CLI")
@@ -53,8 +54,10 @@ def cleanup():
                     shutil.rmtree(path)
                 else:
                     os.remove(path)
-            except Exception:
-                pass
+            except Exception as exc:
+                logging.getLogger(__name__).debug(
+                    "Cleanup failed for '%s': %s", path, exc
+                )
 
 
 atexit.register(cleanup)
@@ -322,6 +325,7 @@ def _match_priority(source: str) -> int:
     priorities = {
         "exact_id": 3,
         "exact_alias": 2,
+        "fuzzy_high_confidence": 2,
         "research": 2,
         "ai": 1,
     }
@@ -355,12 +359,13 @@ async def _run_research_job(
     config: Config,
     progress: Progress,
     progress_task_id: int,
+    client=None,
 ) -> tuple[int, BiomarkerEntry | None]:
     progress.update(progress_task_id, fields={"status": "running"})
     entry: BiomarkerEntry | None = None
     try:
         entry = await research_agent.research_biomarker(
-            item.raw_name, config, extracted_unit=item.unit
+            item.raw_name, config, extracted_unit=item.unit, client=client
         )
     except Exception:
         logging.getLogger(__name__).exception(
@@ -415,7 +420,6 @@ def analyze(
     show_skipped: bool = typer.Option(
         False,
         "--show-skipped",
-        "--shop-skipped",
         help="Include skipped/unmatched placeholder rows in report and exports.",
     ),
     review_decisions: bool = typer.Option(
@@ -568,6 +572,7 @@ async def _analyze_flow(
     logger.debug(f"Starting analysis flow for: {file_path}")
 
     config = Config()
+    ai_client = build_ai_client(config)
 
     # 0. Load DB State
     biomarkers_db = db.load_db(config.biomarkers_path)
@@ -587,6 +592,8 @@ async def _analyze_flow(
         console.print("[bold cyan]1/4[/bold cyan] Loading report...")
         try:
             image_paths = loader.load_file_as_images(file_path)
+            if image_paths:
+                CLEANUP_PATHS.add(os.path.dirname(image_paths[0]))
             for p in image_paths:
                 CLEANUP_PATHS.add(p)
             console.print(f"[green]✓[/green] Loaded {len(image_paths)} page(s).")
@@ -597,12 +604,14 @@ async def _analyze_flow(
         # 2. Pipeline: Extraction
         console.print("[bold cyan]2/4[/bold cyan] Extracting biomarkers...")
         try:
-            (
-                extracted_items,
-                extraction_notes,
-                extraction_metadata,
-                raw_llm_response,
-            ) = await llm.extract_biomarkers(image_paths, config)
+            extraction_result = await extract_report(
+                image_paths=image_paths,
+                config=config,
+            )
+            extracted_items = extraction_result.biomarkers
+            extraction_notes = extraction_result.notes
+            extraction_metadata = extraction_result.metadata
+            raw_llm_response = extraction_result.raw_payload
         except Exception as e:
             console.print(
                 f"[bold red]✗ Extraction failed:[/bold red] {e}\n"
@@ -691,7 +700,7 @@ async def _analyze_flow(
                 match_source: str,
             ):
                 nonlocal biomarkers_db
-                if match_source == "exact_id":
+                if match_source in ("exact_id", "ai", "fuzzy_high_confidence"):
                     biomarkers_db = db.add_alias_to_entry(
                         config.biomarkers_path,
                         biomarkers_db,
@@ -754,7 +763,8 @@ async def _analyze_flow(
             ) -> tuple[int, BiomarkerEntry | None]:
                 async with research_semaphore:
                     return await _run_research_job(
-                        index, item, config, progress, research_task_id
+                        index, item, config, progress, research_task_id,
+                        client=ai_client,
                     )
 
             async def _resolve_binary_decision(
@@ -770,6 +780,7 @@ async def _analyze_flow(
                     question=question,
                     context=context,
                     config=config,
+                    client=ai_client,
                 )
                 if recommendation:
                     ai_default = bool(recommendation.get("approved", False))
@@ -850,6 +861,7 @@ async def _analyze_flow(
                     canonical_unit=matched_entry.canonical_unit,
                     observed_value=item.value,
                     config=config,
+                    client=ai_client,
                 )
                 if not proposal:
                     console.print(
@@ -942,7 +954,7 @@ async def _analyze_flow(
                     candidate_entry,
                     matched_id=matched_entry.id,
                 )
-                db.save_db(config.biomarkers_path, biomarkers_db)
+                await db.asave_db(config.biomarkers_path, biomarkers_db)
                 matched_entry = (
                     _entry_by_id(biomarkers_db, matched_entry.id) or candidate_entry
                 )
@@ -959,7 +971,26 @@ async def _analyze_flow(
                 )
                 return matched_entry
 
+            # Dedup extracted biomarkers by normalized raw name (keep first occurrence).
+            seen_raw_names: dict[str, int] = {}
+            dedup_indices_to_skip: set[int] = set()
+            for i, item in enumerate(extracted_items):
+                norm = db.normalize_biomarker_name(item.raw_name)
+                if norm in seen_raw_names:
+                    dedup_indices_to_skip.add(i)
+                    logger.debug(
+                        "Skipping duplicate extraction '%s' at index %d (first seen at %d)",
+                        item.raw_name, i, seen_raw_names[norm],
+                    )
+                else:
+                    seen_raw_names[norm] = i
+
             for index, item in enumerate(extracted_items):
+                if index in dedup_indices_to_skip:
+                    _store_unknown_result(index, item)
+                    progress.advance(overall_task)
+                    continue
+
                 matched_entry: BiomarkerEntry | None = None
                 match_source = "ai"
                 match_score = 0.0
@@ -1001,82 +1032,94 @@ async def _analyze_flow(
 
                 # Phase 3: Fuzzy candidates + AI disambiguation
                 if not matched_entry:
-                    all_candidates = db.find_fuzzy_candidates(
+                    candidates = db.find_fuzzy_candidates(
                         biomarkers_db, item.raw_name
                     )
-                    candidates = all_candidates
-                    decision, entry = await research_agent.disambiguate_biomarker(
-                        item.raw_name, candidates, config
-                    )
 
-                    if decision == "match" and entry:
-                        matched_entry = entry
-                        match_source = "ai"
-                        match_score = next(
-                            (
-                                score
-                                for candidate_entry, _match_label, score in candidates
-                                if candidate_entry.id == entry.id
-                            ),
-                            0.0,
-                        )
+                    # Try deterministic high-confidence match before AI.
+                    hc_entry = _high_confidence_candidate(candidates)
+                    if hc_entry:
+                        matched_entry = hc_entry
+                        match_source = "fuzzy_high_confidence"
+                        match_score = candidates[0][2] if candidates else 0.0
                         logger.debug(
-                            f"AI confirmed match for '{item.raw_name}' -> {entry.id}"
+                            "High-confidence fuzzy match for '%s' -> %s (score=%.1f)",
+                            item.raw_name, hc_entry.id, match_score,
                         )
-                    elif decision == "unknown":
-                        console.print(
-                            f"[dim]~ Skipped '{item.raw_name}' (not a biomarker)[/dim]"
+
+                    if not matched_entry:
+                        decision, entry = await research_agent.disambiguate_biomarker(
+                            item.raw_name, candidates, config, client=ai_client
                         )
-                        _store_unknown_result(index, item)
-                        progress.advance(overall_task)
-                        continue
-                    elif decision == "research" and research_enabled:
-                        should_research = True
-                        if ask_before_research:
-                            if not sys.stdin.isatty():
-                                console.print(
-                                    f"[dim]~ Skipped '{item.raw_name}' (cannot prompt in non-interactive mode)[/dim]"
-                                )
-                                _store_unknown_result(index, item)
-                                progress.advance(overall_task)
-                                continue
-                            else:
-                                progress.stop()
-                                try:
-                                    should_research = typer.confirm(
-                                        (
-                                            f"Research unknown biomarker '{item.raw_name}'"
-                                            f" ({_format_value(item.value)} {item.unit})?"
-                                        ),
-                                        default=True,
-                                    )
-                                finally:
-                                    progress.start()
-                        if not should_research:
+
+                        if decision == "match" and entry:
+                            matched_entry = entry
+                            match_source = "ai"
+                            match_score = next(
+                                (
+                                    score
+                                    for candidate_entry, _match_label, score in candidates
+                                    if candidate_entry.id == entry.id
+                                ),
+                                0.0,
+                            )
+                            logger.debug(
+                                f"AI confirmed match for '{item.raw_name}' -> {entry.id}"
+                            )
+                        elif decision == "unknown":
                             console.print(
-                                f"[dim]~ Skipped '{item.raw_name}' (research declined)[/dim]"
+                                f"[dim]~ Skipped '{item.raw_name}' (not a biomarker)[/dim]"
                             )
                             _store_unknown_result(index, item)
                             progress.advance(overall_task)
                             continue
+                        elif decision == "research" and research_enabled:
+                            should_research = True
+                            if ask_before_research:
+                                if not sys.stdin.isatty():
+                                    console.print(
+                                        f"[dim]~ Skipped '{item.raw_name}' (cannot prompt in non-interactive mode)[/dim]"
+                                    )
+                                    _store_unknown_result(index, item)
+                                    progress.advance(overall_task)
+                                    continue
+                                else:
+                                    progress.stop()
+                                    try:
+                                        should_research = typer.confirm(
+                                            (
+                                                f"Research unknown biomarker '{item.raw_name}'"
+                                                f" ({_format_value(item.value)} {item.unit})?"
+                                            ),
+                                            default=True,
+                                        )
+                                    finally:
+                                        progress.start()
+                            if not should_research:
+                                console.print(
+                                    f"[dim]~ Skipped '{item.raw_name}' (research declined)[/dim]"
+                                )
+                                _store_unknown_result(index, item)
+                                progress.advance(overall_task)
+                                continue
 
-                        research_task_id = progress.add_task(
-                            description=f"Research '{item.raw_name}'",
-                            total=1,
-                            status="queued",
-                        )
-                        task = asyncio.create_task(
-                            _run_limited_research(index, item, research_task_id)
-                        )
-                        pending_research_jobs.append(
-                            _PendingResearchJob(
-                                index=index,
-                                item=item,
-                                progress_task_id=research_task_id,
-                                task=task,
+                            research_task_id = progress.add_task(
+                                description=f"Research '{item.raw_name}'",
+                                total=1,
+                                status="queued",
                             )
-                        )
-                        continue
+                            task = asyncio.create_task(
+                                _run_limited_research(index, item, research_task_id)
+                            )
+                            pending_research_jobs.append(
+                                _PendingResearchJob(
+                                    index=index,
+                                    item=item,
+                                    progress_task_id=research_task_id,
+                                    task=task,
+                                )
+                            )
+                            continue
 
                 if matched_entry:
                     matched_entry = await _maybe_assist_unit_conversion(
@@ -1121,6 +1164,7 @@ async def _analyze_flow(
                                     existing_entry=existing_equivalent,
                                     observed_raw_name=item.raw_name,
                                     config=config,
+                                    client=ai_client,
                                 )
                             )
                             if merge_recommendation:
@@ -1165,7 +1209,7 @@ async def _analyze_flow(
                                         progress.start()
 
                             if should_merge:
-                                biomarkers_db = db.merge_researched_entry(
+                                biomarkers_db = await db.amerge_researched_entry(
                                     config.biomarkers_path,
                                     biomarkers_db,
                                     existing_equivalent.id,
@@ -1183,7 +1227,7 @@ async def _analyze_flow(
                                     biomarkers_db, existing_equivalent.id
                                 )
                             else:
-                                biomarkers_db = db.append_to_db(
+                                biomarkers_db = await db.aappend_to_db(
                                     config.biomarkers_path, biomarkers_db, new_entry
                                 )
                                 console.print(
@@ -1198,7 +1242,7 @@ async def _analyze_flow(
                                     or new_entry
                                 )
                         else:
-                            biomarkers_db = db.append_to_db(
+                            biomarkers_db = await db.aappend_to_db(
                                 config.biomarkers_path, biomarkers_db, new_entry
                             )
                             console.print(f"[green]+[/green] Added: {new_entry.id}")

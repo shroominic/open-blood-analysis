@@ -1,10 +1,10 @@
 import json
 import logging
 import re
-from typing import Any, List, Tuple
+from typing import Any, List, Literal, Tuple
 
 from .config import Config
-from .ai_client import build_ai_client
+from .ai_client import AIClient, build_ai_client, retry_async
 from .types import ExtractedBiomarker, ReportMetadata
 
 
@@ -12,6 +12,38 @@ logger = logging.getLogger(__name__)
 
 
 _NUMBER_RE = re.compile(r"^[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$")
+
+
+def build_report_extraction_system_instruction(
+    *,
+    source_kind: Literal["images", "text"] = "images",
+) -> str:
+    source_phrase = (
+        "the provided images"
+        if source_kind == "images"
+        else "the provided report text"
+    )
+    return (
+        "You are a specialized medical assistant. Extract blood test biomarkers "
+        f"from {source_phrase}. Return ONLY a raw JSON object with a 'data' key "
+        "containing a list of objects with: 'raw_name' (exact string from doc), "
+        "'value' (number or string), 'unit' (string), 'flags' (list of strings "
+        "like 'High', 'Low'). Do not include normal ranges in the JSON. \n\n"
+        "IMPORTANT: For general observations or qualitative assessments that are "
+        "NOT specific biomarkers (e.g. 'Serum Appearance', 'Hemolysis Index', "
+        "'Lipemia Index', 'Sample quality'), do NOT include them in the 'data' "
+        "list. Instead, put them in a separate 'notes' string list in the JSON "
+        "root. \n\nAlso include optional report metadata in a root 'metadata' "
+        "object with this shape: {'patient': {'age': int|null, 'gender': "
+        "string|null}, 'lab': {'company_name': string|null, 'location': "
+        "string|null}, 'blood_collection': {'date': string|null, 'time': "
+        "string|null, 'datetime': string|null}}. Use null for unknown values; do "
+        "not invent missing info. \n\nFor qualitative tests that ARE biomarkers "
+        "(e.g. Urine strip), return the exact string value (e.g. 'Negative', "
+        "'Positive', 'Trace') in the 'value' field. Do not convert 'Negative' to "
+        "-1. If numeric value is '< 5', extract 5 and add '<' to flags. Output "
+        "valid JSON only, no markdown markers."
+    )
 
 
 def _coerce_raw_value(value: object) -> float | str | bool:
@@ -32,11 +64,31 @@ def _coerce_raw_value(value: object) -> float | str | bool:
     normalized = text.lstrip("<>~≈≤≥").strip().rstrip("*")
     normalized = normalized.replace(" ", "")
 
-    # Handle decimal comma and thousands comma.
+    # Handle decimal comma and thousands separators (locale-aware heuristic).
     if "," in normalized and "." in normalized:
-        normalized = normalized.replace(",", "")
+        # Both present: whichever appears last is the decimal separator.
+        last_comma = normalized.rfind(",")
+        last_dot = normalized.rfind(".")
+        if last_comma > last_dot:
+            # European: 1.000,50 -> 1000.50
+            normalized = normalized.replace(".", "").replace(",", ".")
+        else:
+            # American: 1,000.50 -> 1000.50
+            normalized = normalized.replace(",", "")
     elif "," in normalized:
-        normalized = normalized.replace(",", ".")
+        # Only comma: if exactly 3 digits after comma and all digits before -> thousands
+        parts = normalized.split(",")
+        if (
+            len(parts) == 2
+            and len(parts[1]) == 3
+            and parts[0].isdigit()
+            and parts[1].isdigit()
+        ):
+            # Thousands separator: 1,500 -> 1500
+            normalized = normalized.replace(",", "")
+        else:
+            # Decimal comma: 1,5 -> 1.5 or 0,75 -> 0.75
+            normalized = normalized.replace(",", ".")
 
     if _NUMBER_RE.fullmatch(normalized):
         try:
@@ -48,25 +100,32 @@ def _coerce_raw_value(value: object) -> float | str | bool:
 
 
 async def extract_biomarkers(
-    image_paths: List[str], config: Config
+    image_paths: List[str],
+    config: Config,
+    *,
+    model: str | None = None,
+    client: AIClient | None = None,
 ) -> Tuple[List[ExtractedBiomarker], List[str], ReportMetadata, str]:
     """
     Pipeline step: Images -> LLM extraction -> Raw Biomarkers + Notes
     """
-    client = build_ai_client(config)
+    if client is None:
+        client = build_ai_client(config)
 
-    system_instruction = "You are a specialized medical assistant. Extract blood test biomarkers from the provided images. Return ONLY a raw JSON object with a 'data' key containing a list of objects with: 'raw_name' (exact string from doc), 'value' (number or string), 'unit' (string), 'flags' (list of strings like 'High', 'Low'). Do not include normal ranges in the JSON. \n\nIMPORTANT: For general observations or qualitative assessments that are NOT specific biomarkers (e.g. 'Serum Appearance', 'Hemolysis Index', 'Lipemia Index', 'Sample quality'), do NOT include them in the 'data' list. Instead, put them in a separate 'notes' string list in the JSON root. \n\nAlso include optional report metadata in a root 'metadata' object with this shape: {'patient': {'age': int|null, 'gender': string|null}, 'lab': {'company_name': string|null, 'location': string|null}, 'blood_collection': {'date': string|null, 'time': string|null, 'datetime': string|null}}. Use null for unknown values; do not invent missing info. \n\nFor qualitative tests that ARE biomarkers (e.g. Urine strip), return the exact string value (e.g. 'Negative', 'Positive', 'Trace') in the 'value' field. Do not convert 'Negative' to -1. If numeric value is '< 5', extract 5 and add '<' to flags. Output valid JSON only, no markdown markers."
+    model_name = model or config.ocr
+    system_instruction = build_report_extraction_system_instruction(source_kind="images")
 
     logger.debug(
         "Sending %s images to %s (%s)...",
         len(image_paths),
         config.ai_provider,
-        config.ocr,
+        model_name,
     )
 
     try:
-        content_str = await client.extract_report_json(
-            model=config.ocr,
+        content_str = await retry_async(
+            client.extract_report_json,
+            model=model_name,
             system_instruction=system_instruction,
             prompt="Extract all biomarkers from these blood test report pages.",
             image_paths=image_paths,
@@ -82,6 +141,37 @@ async def extract_biomarkers(
         return [], [], ReportMetadata(), ""
 
     logger.debug(f"Raw response content: {content_str[:200]}...")
+
+    biomarkers, notes, metadata = _parse_llm_response(content_str)
+    return biomarkers, notes, metadata, content_str
+
+
+async def extract_biomarkers_from_text(
+    document_text: str,
+    config: Config,
+    *,
+    model: str | None = None,
+    client: AIClient | None = None,
+) -> Tuple[List[ExtractedBiomarker], List[str], ReportMetadata, str]:
+    if client is None:
+        client = build_ai_client(config)
+
+    model_name = model or config.ocr
+    prompt = (
+        "Extract all biomarkers from this blood test report text.\n\n"
+        f"{document_text}"
+    )
+    content_str = await retry_async(
+        client.prompt_json,
+        model=model_name,
+        prompt=(
+            f"{build_report_extraction_system_instruction(source_kind='text')}\n\n"
+            f"{prompt}"
+        ),
+    )
+
+    if not content_str:
+        return [], [], ReportMetadata(), ""
 
     biomarkers, notes, metadata = _parse_llm_response(content_str)
     return biomarkers, notes, metadata, content_str
@@ -237,10 +327,18 @@ def _parse_llm_response(
             if "data" in data and isinstance(data["data"], list):
                 raw_list = data["data"]
             else:
-                for key in data:
-                    if isinstance(data[key], list) and key != "notes":
+                # Try known keys first before arbitrary list scan.
+                _KNOWN_LIST_KEYS = ("results", "biomarkers", "markers", "items", "values", "tests")
+                _EXCLUDED_KEYS = {"notes", "metadata", "warnings", "errors"}
+                for key in _KNOWN_LIST_KEYS:
+                    if key in data and isinstance(data[key], list):
                         raw_list = data[key]
                         break
+                else:
+                    for key in data:
+                        if isinstance(data[key], list) and key not in _EXCLUDED_KEYS:
+                            raw_list = data[key]
+                            break
 
         results = []
         for item in raw_list:
@@ -300,11 +398,13 @@ async def llm_request(
     web_search: bool = False,
     deep_search: bool = False,
     json_output: bool = False,
+    config: Config | None = None,
 ) -> str:
     # Reserved for future provider-specific deep-search behavior.
     _ = deep_search
 
-    config = Config()
+    if config is None:
+        config = Config()
     client = build_ai_client(config)
     if json_output:
         if web_search:
