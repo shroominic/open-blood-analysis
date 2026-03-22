@@ -1,0 +1,162 @@
+{
+  "data": [
+    {
+      "raw_name": "Lead in Blood",
+      "value": 5.2,
+      "unit": "ug/L",
+      "raw_value_text": null,
+      "specimen": null,
+      "measurement_qualifier": null,
+      "semantic_value": null,
+      "is_computed_candidate": false,
+      "flags": [],
+      "confidence": 1.0,
+      "page_num": null,
+      "source_engine": "gemini_vision"
+    },
+    {
+      "raw_name": "Lead in Blood",
+      "value": 0.52,
+      "unit": "ug/dL",
+      "raw_value_text": null,
+      "specimen": null,
+      "measurement_qualifier": null,
+      "semantic_value": null,
+      "is_computed_candidate": false,
+      "flags": [],
+      "confidence": 1.0,
+      "page_num": null,
+      "source_engine": "gemini_vision"
+    },
+    {
+      "raw_name": "Mercury in Blood",
+      "value": 0.38,
+      "unit": "ug/L",
+      "raw_value_text": null,
+      "specimen": null,
+      "measurement_qualifier": null,
+      "semantic_value": null,
+      "is_computed_candidate": false,
+      "flags": [],
+      "confidence": 1.0,
+      "page_num": null,
+      "source_engine": "gemini_vision"
+    },
+    {
+      "raw_name": "Cadmium in Blood",
+      "value": 0.36,
+      "unit": "ug/L",
+      "raw_value_text": null,
+      "specimen": null,
+      "measurement_qualifier": null,
+      "semantic_value": null,
+      "is_computed_candidate": false,
+      "flags": [],
+      "confidence": 1.0,
+      "page_num": null,
+      "source_engine": "gemini_vision"
+    },
+    {
+      "raw_name": "Manganese in Blood",
+      "value": 4.71,
+      "unit": "ug/L",
+      "raw_value_text": null,
+      "specimen": null,
+      "measurement_qualifier": null,
+      "semantic_value": null,
+      "is_computed_candidate": false,
+      "flags": [],
+      "confidence": 1.0,
+      "page_num": null,
+      "source_engine": "gemini_vision"
+    },
+    {
+      "raw_name": "Chromium in Blood",
+      "value": 0.38,
+      "unit": "ug/L",
+      "raw_value_text": null,
+      "specimen": null,
+      "measurement_qualifier": null,
+      "semantic_value": null,
+      "is_computed_candidate": false,
+      "flags": [],
+      "confidence": 1.0,
+      "page_num": null,
+      "source_engine": "gemini_vision"
+    },
+    {
+      "raw_name": "Cobalt in Blood",
+      "value": 0.14,
+      "unit": "ug/L",
+      "raw_value_text": null,
+      "specimen": null,
+      "measurement_qualifier": null,
+      "semantic_value": null,
+      "is_computed_candidate": false,
+      "flags": [],
+      "confidence": 1.0,
+      "page_num": null,
+      "source_engine": "gemini_vision"
+    },
+    {
+      "raw_name": "Nickel in Blood",
+      "value": 0.11,
+      "unit": "ug/L",
+      "raw_value_text": null,
+      "specimen": null,
+      "measurement_qualifier": null,
+      "semantic_value": null,
+      "is_computed_candidate": false,
+      "flags": [],
+      "confidence": 1.0,
+      "page_num": null,
+      "source_engine": "gemini_vision"
+    },
+    {
+      "raw_name": "Arsenic in Blood",
+      "value": 0.35,
+      "unit": "ug/L",
+      "raw_value_text": null,
+      "specimen": null,
+      "measurement_qualifier": null,
+      "semantic_value": null,
+      "is_computed_candidate": false,
+      "flags": [],
+      "confidence": 1.0,
+      "page_num": null,
+      "source_engine": "gemini_vision"
+    },
+    {
+      "raw_name": "Aluminium in Blood",
+      "value": 2.65,
+      "unit": "ug/L",
+      "raw_value_text": null,
+      "specimen": null,
+      "measurement_qualifier": null,
+      "semantic_value": null,
+      "is_computed_candidate": false,
+      "flags": [],
+      "confidence": 1.0,
+      "page_num": null,
+      "source_engine": "gemini_vision"
+    }
+  ],
+  "notes": [
+    "Method: ICP-MS"
+  ],
+  "metadata": {
+    "patient": {
+      "age": 22,
+      "gender": "Male"
+    },
+    "lab": {
+      "company_name": "Bio Molecular Laboratories (Thailand) Co., Ltd. (N Health)",
+      "location": "Bangkapi, Huaykwang, Bangkok 10310, Thailand"
+    },
+    "blood_collection": {
+      "date": "20 Dec 2024",
+      "time": "09:00",
+      "datetime": "2024-12-20T09:00:00"
+    }
+  }
+}
