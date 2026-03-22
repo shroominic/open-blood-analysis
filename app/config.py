@@ -47,7 +47,7 @@ class Config(BaseSettings):
     gemini_api_key: str | None = None
     openai_api_key: str | None = None
     openai_base_url: str = "https://api.openai.com/v1"
-    ai_model: str = "gemini-3-flash-preview"
+    ai_model: str = "gemini-3.1-pro-preview"
 
     # Task specific models (fallback to ai_model if None)
     ai_ocr_model: str | None = None
@@ -93,7 +93,7 @@ class Config(BaseSettings):
                 id="openai_compatible_vision",
                 execution_mode="document",
                 model=self.ocr,
-                    base_url=self.openai_base_url,
+                base_url=self.openai_base_url,
                 api_key=self.openai_api_key,
                 weight=1.0,
             )

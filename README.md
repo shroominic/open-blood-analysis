@@ -71,15 +71,16 @@ Create a `.env` file in the project root:
 
 ```bash
 GEMINI_API_KEY=your-gemini-api-key
-AI_MODEL=gemini-3-flash-preview
+AI_MODEL=gemini-3.1-pro-preview
 # Optional task-specific overrides:
-# AI_OCR_MODEL=gemini-3-flash-preview
-# AI_RESEARCH_MODEL=gemini-3-flash-preview
-# AI_THINKING_MODEL=gemini-3-flash-preview
+# AI_OCR_MODEL=gemini-3.1-pro-preview
+# AI_RESEARCH_MODEL=gemini-3.1-pro-preview
+# AI_THINKING_MODEL=gemini-3.1-pro-preview
 # BIOMARKERS_PATH=biomarkers.json
 ```
 
 Or export variables directly:
+
 ```bash
 export GEMINI_API_KEY="your-gemini-api-key"
 ```
@@ -113,6 +114,9 @@ uv run blood-analysis report.pdf --output results.json
 
 # Save as CSV
 uv run blood-analysis report.pdf --output results.csv
+
+# Use an alternate biomarkers database file for this run
+uv run blood-analysis report.pdf --biomarkers-path data/biomarkers.v2.json
 ```
 
 ### Disable Auto-Research
@@ -131,7 +135,7 @@ uv run blood-analysis --reresearch-biomarker apolipoprotein_b
 # Provide explicit unit context for the research prompt
 uv run blood-analysis --reresearch-biomarker thyroid_stimulating_hormone --reresearch-unit "uIU/mL"
 
-# Preview researched JSON without writing biomarkers.json
+# Preview researched JSON without writing the configured biomarkers DB file
 uv run blood-analysis --reresearch-biomarker rdw --dry-run-reresearch
 ```
 
@@ -177,6 +181,7 @@ The tool maintains a `biomarkers.json` file that grows as you analyze more repor
 ### Unit Conversions
 
 The conversion engine handles generic concentration scaling automatically:
+
 - Mass scaling: `mg/dL <-> g/L`, `ng/mL <-> ug/L`, etc.
 - Molar scaling: `mmol/L <-> umol/L`, etc.
 - Mass↔molar conversion when `molar_mass_g_per_mol` is provided.
@@ -184,12 +189,14 @@ The conversion engine handles generic concentration scaling automatically:
 Biomarker `conversions` are only for special transforms not covered generically.
 
 Special formulas use safe expression evaluation with `simpleeval`:
+
 - `x` represents the input value
 - Example: `"mg/dL": "x / 38.67"` converts mg/dL to mmol/L
 
 ### Demographic Rules
 
 Reference ranges can be customized by demographics:
+
 - Conditions: `sex == male`, `sex == female`, `age > 50`, `age < 18`
 - Higher priority rules override lower ones
 
