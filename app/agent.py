@@ -4,7 +4,7 @@ from typing import Any, List, Literal
 
 from .config import Config
 from .ai_client import AIClient, build_ai_client, retry_async
-from .types import BiomarkerEntry
+from .types import BiomarkerEntry, ExtractedBiomarker
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,8 @@ def _extract_json_payload(content: str) -> str:
 async def disambiguate_biomarker(
     raw_name: str, candidates: List[tuple[BiomarkerEntry, str, float]], config: Config,
     client: AIClient | None = None,
+    item: ExtractedBiomarker | None = None,
+    allow_computed: bool = False,
 ) -> tuple[Literal["match", "research", "unknown"], BiomarkerEntry | None]:
     """
     Use AI to decide between fuzzy candidates.
@@ -57,15 +59,28 @@ async def disambiguate_biomarker(
                 f"  {i+1}. ID: '{entry.id}' "
                 f"(matched via '{match_str}', score={score:.1f}, "
                 f"unit='{entry.canonical_unit}', type='{entry.value_type}', "
+                f"kind='{entry.kind}', specimen='{entry.specimen}', representation='{entry.representation}', "
                 f"aliases={entry.aliases[:6]})"
             )
             for i, (entry, match_str, score) in enumerate(candidates)
         ]
     )
+    row_context = {}
+    if item is not None:
+        row_context = {
+            "raw_name": item.raw_name,
+            "value": item.value,
+            "unit": item.unit,
+            "specimen": item.specimen,
+            "measurement_qualifier": item.measurement_qualifier,
+            "semantic_value": item.semantic_value,
+            "is_computed_candidate": item.is_computed_candidate,
+        }
 
     prompt = f"""You are a strict clinical biomarker disambiguation reviewer.
 
 Raw biomarker name from a lab report: "{raw_name}"
+Row context JSON: {json.dumps(row_context, ensure_ascii=False, sort_keys=True)}
 
 These are possible matches from our database:
 {candidates_text if candidates else "  (No candidates found)"}
@@ -73,13 +88,16 @@ These are possible matches from our database:
 Decide the best action:
 1. If one of the candidates is clearly the SAME biomarker (just different spelling/language), respond with: {{"action": "match", "index": <1-based index>}}
 2. If none match and this is a real biomarker we should add to our database, respond with: {{"action": "research"}}
-3. If this is NOT a biomarker (e.g., a date, patient name, company header), or if it is a COMPUTED biomarker (e.g., a ratio, percentage of another value, index like "Albumin/Globulin ratio" or "HOMA-IR"), respond with: {{"action": "unknown"}}
+3. If this is NOT a biomarker (e.g., a date, patient name, company header), respond with: {{"action": "unknown"}}
 
 Strict safety rules:
 - If uncertain, choose "unknown" (do NOT force a match).
+- Respect specimen and representation differences. Blood vs urine and percent vs absolute-count are NOT interchangeable.
+- Qualitative urine analytes must not be matched to quantitative blood analytes.
 - If the raw name is composite/ratio/index style (e.g., has "/" between markers, or contains words like ratio/index/risk), choose "unknown" unless a candidate is explicitly that same computed biomarker.
 - Never map a composite label to a single direct analyte candidate (example: "AA/EPA" must not map to "eicosapentaenoic_acid").
 - Short acronym overlap alone (like EPA in AA/EPA) is insufficient for a match.
+- {"Computed biomarkers may be matched or researched when the row context indicates a computed candidate." if allow_computed else "Do NOT match or research computed biomarkers in this mode."}
 
 Respond with ONLY valid JSON, no explanation."""
 
@@ -319,6 +337,8 @@ async def recommend_merge_decision(
 async def research_biomarker(
     biomarker_name: str, config: Config, extracted_unit: str | None = None,
     client: AIClient | None = None,
+    item: ExtractedBiomarker | None = None,
+    allow_computed: bool = False,
 ) -> BiomarkerEntry | None:
     """
     Pipeline step: Unknown Name -> Provider research synthesis -> New Biomarker Schema
@@ -337,12 +357,25 @@ async def research_biomarker(
     prompt = f"""
     You are a medical research assistant.
     Research Object: "{biomarker_name}"
+    Row context JSON: {json.dumps({
+        "raw_name": item.raw_name if item else biomarker_name,
+        "value": item.value if item else None,
+        "unit": item.unit if item else extracted_unit,
+        "specimen": item.specimen if item else None,
+        "measurement_qualifier": item.measurement_qualifier if item else None,
+        "semantic_value": item.semantic_value if item else None,
+        "is_computed_candidate": item.is_computed_candidate if item else False,
+    }, ensure_ascii=False, sort_keys=True)}
 
     Task: Research this biomarker using the web and create a structured JSON entry for it.
     The JSON must match the following pydantic schema:
     {{
         "id": "canonical_english_medical_name_snake_case",
         "aliases": ["list", "of", "common", "names", "in", "multiple", "languages"],
+        "kind": "direct | computed",
+        "analyte_family": "shared family if applicable or null",
+        "specimen": "blood | serum | plasma | urine | other | unknown | null",
+        "representation": "quantitative | absolute_count | percent | boolean | enum | semiquantitative | ratio | index | derived | null",
         "canonical_unit": "most_common_metric_unit",
         "description": "Short description in English",
         "min_normal": float or null,
@@ -357,9 +390,23 @@ async def research_biomarker(
         "conversions": {{
             "other_unit": "formula_string_using_x"
         }},
+        "interpretation": {{
+            "kind": "quantitative_range | categorical_labels | ordinal_labels | computed_policy",
+            "label_map": {{}},
+            "ordered_values": []
+        }} or null,
+        "computed_definition": {{
+            "dependencies": ["biomarker_id"],
+            "formula": "python_expression_using_dependency_ids",
+            "tolerance": float or null,
+            "compute_when_missing": bool,
+            "emit_when_reported": bool
+        }} or null,
         "reference_rules": [
             {{ "condition": "string_condition", "min_normal": float or null, "max_normal": float or null, "priority": int }}
-        ]
+        ],
+        "learned_context_aliases": [],
+        "learned_value_aliases": []
     }}
     
     CONVERSION RULES:
@@ -391,20 +438,26 @@ async def research_biomarker(
     
     CRITICAL ID RULES:
     1. The "id" MUST be the canonical medical name in ENGLISH (e.g., 'total_cholesterol' not 'colesterol_total').
-    2. NEVER include language-specific descriptors like 'sangre', 'suero', 'blood', 'test' in the ID unless it's part of the canonical medical term.
+    2. Include specimen or representation in the ID when it changes clinical meaning, for example blood vs urine or percent vs absolute count.
     3. REMOVE suffixes like 'plus', 'ultrasensible', 'total' unless they define a biologically distinct biomarker.
     4. If the input name is in another language, translate it to the standard English medical term for the ID.
     5. Put the original name and other variations in the "aliases" list.
 
     COMPUTED BIOMARKER RULE:
-    1. DO NOT research or create entries for computed biomarkers, ratios, or indexes (e.g., "Albumin/Globulin Ratio", "Free Thyroxine Index", "LDL/HDL Ratio").
-    2. If the input is a ratio or formula-derived value, return an empty response or a JSON with "id": "unknown".
+    1. {"You MAY research and create computed biomarker entries for ratios, indices, saturations, and alternate derived representations in this mode." if allow_computed else "DO NOT research or create entries for computed biomarkers, ratios, or indexes (e.g., 'Albumin/Globulin Ratio', 'Free Thyroxine Index', 'LDL/HDL Ratio')."}
+    2. {"For computed biomarkers, set kind='computed' or provide a computed_definition on a direct analyte only when the biomarker is a clinically standard derived representation." if allow_computed else "If the input is a ratio or formula-derived value, return an empty response or a JSON with 'id': 'unknown'."}
 
     QUALITATIVE BIOMARKERS:
     1. For qualitative tests (e.g., Urine Ketones, Nitrite), set "min_normal" and "max_normal" to null.
     2. For binary outcomes, set "value_type" = "boolean" and use "normal_values" for values considered normal (e.g., ["Negative", "Not detected"]).
     3. For multi-category outcomes, set "value_type" = "enum", provide "enum_values", and set "normal_values" accordingly.
     4. For quantitative tests, set "value_type" = "quantitative", "enum_values" = null, and "normal_values" = null.
+    5. Use the interpretation block so non-numeric biomarkers can map canonical values to labels.
+
+    ONTOLOGY SAFETY:
+    1. Never merge percent and absolute-count leukocyte forms into one entry.
+    2. Never merge urine analytes with blood or serum analytes when specimen changes clinical meaning.
+    3. Prefer explicit IDs like neutrophils_percent, neutrophils_absolute_count, serum_bilirubin, urine_bilirubin, urine_ph, blood_ph.
 
     If you cannot calculate conversions, leave it empty.
     Ensure 'id' is distinct and snake_case.

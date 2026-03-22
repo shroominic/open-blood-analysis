@@ -4,6 +4,7 @@ import os
 import logging
 import re
 import unicodedata
+from pathlib import Path
 from typing import List, Optional
 from filelock import FileLock
 
@@ -13,10 +14,15 @@ except ImportError:
     process = None  # type: ignore
     fuzz = None  # type: ignore
 
-from .types import BiomarkerEntry
+from .types import BiomarkerEntry, LearnedContextAlias, LearnedValueAlias
 
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_parent_dir(path: str) -> None:
+    parent = Path(path).expanduser().parent
+    parent.mkdir(parents=True, exist_ok=True)
 
 
 def normalize_biomarker_name(name: str) -> str:
@@ -48,6 +54,38 @@ def _entry_has_alias(entry: BiomarkerEntry, alias: str) -> bool:
     return False
 
 
+def _entry_has_context_alias(
+    entry: BiomarkerEntry,
+    alias: LearnedContextAlias,
+) -> bool:
+    for existing in entry.learned_context_aliases:
+        if normalize_biomarker_name(existing.raw_name) != normalize_biomarker_name(alias.raw_name):
+            continue
+        if normalize_biomarker_name(existing.raw_unit or "") != normalize_biomarker_name(alias.raw_unit or ""):
+            continue
+        if (existing.specimen or "") != (alias.specimen or ""):
+            continue
+        if (existing.representation or "") != (alias.representation or ""):
+            continue
+        return True
+    return False
+
+
+def _entry_has_value_alias(
+    entry: BiomarkerEntry,
+    alias: LearnedValueAlias,
+) -> bool:
+    for existing in entry.learned_value_aliases:
+        if normalize_biomarker_name(existing.raw_value) != normalize_biomarker_name(alias.raw_value):
+            continue
+        if existing.semantic_value != alias.semantic_value:
+            continue
+        if existing.measurement_qualifier != alias.measurement_qualifier:
+            continue
+        return True
+    return False
+
+
 def load_db(path: str) -> List[BiomarkerEntry]:
     """Loads database entries from disk."""
     if not os.path.exists(path):
@@ -72,6 +110,7 @@ def load_db(path: str) -> List[BiomarkerEntry]:
 
 def save_db(path: str, entries: List[BiomarkerEntry]):
     """Writes database entries to disk."""
+    _ensure_parent_dir(path)
     lock_path = path + ".lock"
     lock = FileLock(lock_path)
 
@@ -179,6 +218,7 @@ def add_alias_to_entry(
     if not cleaned_alias:
         return entries
 
+    _ensure_parent_dir(path)
     lock_path = path + ".lock"
     lock = FileLock(lock_path)
 
@@ -218,6 +258,86 @@ def add_alias_to_entry(
         return current_entries
 
 
+def add_context_alias_to_entry(
+    path: str,
+    entries: List[BiomarkerEntry],
+    entry_id: str,
+    alias: LearnedContextAlias,
+) -> List[BiomarkerEntry]:
+    _ensure_parent_dir(path)
+    lock_path = path + ".lock"
+    lock = FileLock(lock_path)
+
+    with lock:
+        current_entries = []
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                try:
+                    data = json.load(f)
+                    current_entries = [BiomarkerEntry(**item) for item in data]
+                except json.JSONDecodeError:
+                    current_entries = []
+
+        target_index = next(
+            (index for index, entry in enumerate(current_entries) if entry.id == entry_id),
+            None,
+        )
+        if target_index is None:
+            return current_entries or entries
+
+        target_entry = current_entries[target_index]
+        if _entry_has_context_alias(target_entry, alias):
+            return current_entries
+
+        updated_aliases = target_entry.learned_context_aliases + [alias]
+        current_entries[target_index] = target_entry.model_copy(
+            update={"learned_context_aliases": updated_aliases}
+        )
+        with open(path, "w") as f:
+            json.dump([entry.model_dump() for entry in current_entries], f, indent=2)
+        return current_entries
+
+
+def add_value_alias_to_entry(
+    path: str,
+    entries: List[BiomarkerEntry],
+    entry_id: str,
+    alias: LearnedValueAlias,
+) -> List[BiomarkerEntry]:
+    _ensure_parent_dir(path)
+    lock_path = path + ".lock"
+    lock = FileLock(lock_path)
+
+    with lock:
+        current_entries = []
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                try:
+                    data = json.load(f)
+                    current_entries = [BiomarkerEntry(**item) for item in data]
+                except json.JSONDecodeError:
+                    current_entries = []
+
+        target_index = next(
+            (index for index, entry in enumerate(current_entries) if entry.id == entry_id),
+            None,
+        )
+        if target_index is None:
+            return current_entries or entries
+
+        target_entry = current_entries[target_index]
+        if _entry_has_value_alias(target_entry, alias):
+            return current_entries
+
+        updated_aliases = target_entry.learned_value_aliases + [alias]
+        current_entries[target_index] = target_entry.model_copy(
+            update={"learned_value_aliases": updated_aliases}
+        )
+        with open(path, "w") as f:
+            json.dump([entry.model_dump() for entry in current_entries], f, indent=2)
+        return current_entries
+
+
 def find_match_for_entry(
     entries: List[BiomarkerEntry], candidate: BiomarkerEntry
 ) -> Optional[BiomarkerEntry]:
@@ -227,12 +347,23 @@ def find_match_for_entry(
     probe_labels = [candidate.id, *candidate.aliases]
     for label in probe_labels:
         matched = find_exact_match(entries, label)
-        if matched:
+        if matched and matched.kind == candidate.kind:
+            if matched.specimen and candidate.specimen and matched.specimen != candidate.specimen:
+                continue
+            if matched.representation and candidate.representation and matched.representation != candidate.representation:
+                continue
             return matched
 
     fuzzy = find_fuzzy_candidates(entries, candidate.id, top_n=1, min_score=92)
     if fuzzy:
-        return fuzzy[0][0]
+        matched = fuzzy[0][0]
+        if matched.kind != candidate.kind:
+            return None
+        if matched.specimen and candidate.specimen and matched.specimen != candidate.specimen:
+            return None
+        if matched.representation and candidate.representation and matched.representation != candidate.representation:
+            return None
+        return matched
 
     return None
 
@@ -260,6 +391,7 @@ def append_to_db(
     Side-effect: appends to disk. Returns updated list.
     Uses file locking to safely read-check-write.
     """
+    _ensure_parent_dir(path)
     lock_path = path + ".lock"
     lock = FileLock(lock_path)
 
@@ -319,6 +451,24 @@ async def aadd_alias_to_entry(
     path: str, entries: List[BiomarkerEntry], entry_id: str, alias: str
 ) -> List[BiomarkerEntry]:
     return await asyncio.to_thread(add_alias_to_entry, path, entries, entry_id, alias)
+
+
+async def aadd_context_alias_to_entry(
+    path: str,
+    entries: List[BiomarkerEntry],
+    entry_id: str,
+    alias: LearnedContextAlias,
+) -> List[BiomarkerEntry]:
+    return await asyncio.to_thread(add_context_alias_to_entry, path, entries, entry_id, alias)
+
+
+async def aadd_value_alias_to_entry(
+    path: str,
+    entries: List[BiomarkerEntry],
+    entry_id: str,
+    alias: LearnedValueAlias,
+) -> List[BiomarkerEntry]:
+    return await asyncio.to_thread(add_value_alias_to_entry, path, entries, entry_id, alias)
 
 
 async def amerge_researched_entry(

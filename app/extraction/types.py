@@ -15,6 +15,11 @@ class EngineBiomarkerCandidate(BaseModel):
     raw_name: str
     value: float | str | bool
     unit: str
+    raw_value_text: str | None = None
+    specimen: str | None = None
+    measurement_qualifier: str | None = None
+    semantic_value: str | None = None
+    is_computed_candidate: bool = False
     flags: list[str] = Field(default_factory=list)
     confidence: float = 1.0
     page_num: int | None = None
@@ -25,6 +30,11 @@ class EngineBiomarkerCandidate(BaseModel):
             raw_name=self.raw_name,
             value=self.value,
             unit=self.unit,
+            raw_value_text=self.raw_value_text,
+            specimen=self.specimen,
+            measurement_qualifier=self.measurement_qualifier,
+            semantic_value=self.semantic_value,
+            is_computed_candidate=self.is_computed_candidate,
             flags=list(self.flags),
             confidence=self.confidence,
         )

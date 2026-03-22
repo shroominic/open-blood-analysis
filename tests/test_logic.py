@@ -100,7 +100,7 @@ def test_analyze_value_logs_invalid_reference_rule_variables(caplog):
     )
 
     assert result.status == "normal"
-    assert "unknown variable" in caplog.text.lower()
+    assert "unsupported variables" in caplog.text.lower()
     assert "risk_factor" in caplog.text
 
 
@@ -342,3 +342,95 @@ def test_analyze_value_enum_type_checks_allowed_and_normal_values():
     assert normal.status == "normal"
     assert abnormal.status == "abnormal"
     assert unknown.status == "unknown"
+
+
+def test_analyze_value_quantitative_entry_can_use_semantic_label_map_for_strings():
+    entry = BiomarkerEntry(
+        id="urine_epithelial_cells",
+        aliases=["Epithelials"],
+        canonical_unit="/hpf",
+        value_type="quantitative",
+        min_normal=0.0,
+        max_normal=5.0,
+        conversions={},
+        interpretation={
+            "kind": "quantitative_range",
+            "label_map": {
+                "none": "normal",
+                "nil": "normal",
+                "many": "abnormal",
+            },
+        },
+    )
+
+    result = analyze_value(
+        raw_name="Epithelials",
+        raw_value="NIL",
+        raw_unit="",
+        entry=entry,
+        semantic_value="none",
+    )
+
+    assert result.status == "normal"
+    assert result.semantic_value == "none"
+
+
+def test_analyze_value_treats_blank_unit_as_valid_for_ph():
+    entry = BiomarkerEntry(
+        id="urine_ph",
+        aliases=["pH"],
+        canonical_unit="pH",
+        min_normal=4.5,
+        max_normal=8.0,
+        min_optimal=5.5,
+        max_optimal=6.5,
+        conversions={},
+    )
+
+    result = analyze_value(
+        raw_name="pH",
+        raw_value=7.5,
+        raw_unit="",
+        entry=entry,
+    )
+
+    assert result.status == "elevated"
+    assert result.reference_status == "normal"
+
+
+def test_analyze_value_normalizes_label_map_status_values():
+    entry = BiomarkerEntry(
+        id="urine_blood",
+        aliases=["Blood"],
+        canonical_unit="",
+        value_type="enum",
+        enum_values=["Negative", "Trace", "Small"],
+        normal_values=["Negative"],
+        conversions={},
+        interpretation={
+            "kind": "ordinal_labels",
+            "label_map": {
+                "Negative": "Normal",
+                "Trace": "Trace/Abnormal",
+                "Small": "Abnormal",
+            },
+        },
+    )
+
+    normal = analyze_value(
+        raw_name="Blood",
+        raw_value="negative",
+        raw_unit="",
+        entry=entry,
+        semantic_value="Negative",
+    )
+    trace = analyze_value(
+        raw_name="Blood",
+        raw_value="trace",
+        raw_unit="",
+        entry=entry,
+        semantic_value="Trace",
+    )
+
+    assert normal.status == "normal"
+    assert trace.status == "moderate"

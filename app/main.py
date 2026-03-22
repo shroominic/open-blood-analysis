@@ -30,8 +30,11 @@ from .types import AnalyzedBiomarker, BiomarkerEntry, ExtractedBiomarker, Report
 from . import database as db
 from . import loader
 from . import agent as research_agent
+from . import computed as computed_logic
 from .extraction import extract_report
 from . import logic
+from . import resolution
+from .types import LearnedContextAlias, LearnedValueAlias
 
 app = typer.Typer(help="Open Blood Analysis CLI")
 console = Console()
@@ -196,6 +199,12 @@ def _configure_logging(debug: bool):
         logging.getLogger("google_genai.models").setLevel(logging.WARNING)
 
 
+def _build_config(biomarkers_path: str | None = None) -> Config:
+    if biomarkers_path is None:
+        return Config()
+    return Config(biomarkers_path=str(Path(biomarkers_path).expanduser()))
+
+
 def _upsert_biomarker_entry(
     entries: list[BiomarkerEntry],
     new_entry: BiomarkerEntry,
@@ -324,6 +333,7 @@ def _has_unresolved_unit_mismatch(
 def _match_priority(source: str) -> int:
     priorities = {
         "exact_id": 3,
+        "context_alias": 3,
         "exact_alias": 2,
         "fuzzy_high_confidence": 2,
         "research": 2,
@@ -333,16 +343,7 @@ def _match_priority(source: str) -> int:
 
 
 def _can_use_exact_alias_match(raw_name: str) -> bool:
-    """
-    Trust exact alias matches for direct analytes, but avoid composite/index labels.
-    """
-    text = str(raw_name or "").strip().casefold()
-    if not text:
-        return False
-    if "/" in text:
-        return False
-    blocked_tokens = ("ratio", "index", "risk", "indice", "índice")
-    return not any(token in text for token in blocked_tokens)
+    return resolution.can_use_exact_alias_match(raw_name)
 
 
 @dataclass
@@ -365,7 +366,11 @@ async def _run_research_job(
     entry: BiomarkerEntry | None = None
     try:
         entry = await research_agent.research_biomarker(
-            item.raw_name, config, extracted_unit=item.unit, client=client
+            item.raw_name,
+            config,
+            extracted_unit=item.unit,
+            client=client,
+            item=item,
         )
     except Exception:
         logging.getLogger(__name__).exception(
@@ -415,7 +420,12 @@ def analyze(
     dry_run_reresearch: bool = typer.Option(
         False,
         "--dry-run-reresearch",
-        help="Show researched JSON without writing biomarkers.json.",
+        help="Show researched JSON without writing the biomarkers DB file.",
+    ),
+    biomarkers_path: Optional[str] = typer.Option(
+        None,
+        "--biomarkers-path",
+        help="Path to the biomarkers database JSON file.",
     ),
     show_skipped: bool = typer.Option(
         False,
@@ -442,6 +452,7 @@ def analyze(
                 debug=debug,
                 extracted_unit=reresearch_unit,
                 dry_run=dry_run_reresearch,
+                biomarkers_path=biomarkers_path,
             )
         )
         return
@@ -461,6 +472,7 @@ def analyze(
             sex=sex,
             age=age,
             save_raw=save_raw,
+            biomarkers_path=biomarkers_path,
             show_skipped=show_skipped,
             review_decisions=review_decisions,
         )
@@ -472,9 +484,10 @@ async def _reresearch_flow(
     debug: bool = False,
     extracted_unit: str | None = None,
     dry_run: bool = False,
+    biomarkers_path: str | None = None,
 ):
     _configure_logging(debug)
-    config = Config()
+    config = _build_config(biomarkers_path)
     entries = db.load_db(config.biomarkers_path)
     matched = db.find_exact_match(entries, biomarker_query)
 
@@ -560,6 +573,7 @@ async def _analyze_flow(
     sex: str | None = None,
     age: int | None = None,
     save_raw: str | None = None,
+    biomarkers_path: str | None = None,
     show_skipped: bool = False,
     review_decisions: bool = False,
 ):
@@ -571,7 +585,7 @@ async def _analyze_flow(
     logger = logging.getLogger(__name__)
     logger.debug(f"Starting analysis flow for: {file_path}")
 
-    config = Config()
+    config = _build_config(biomarkers_path)
     ai_client = build_ai_client(config)
 
     # 0. Load DB State
@@ -663,8 +677,10 @@ async def _analyze_flow(
         # 3. Pipeline: Processing
         console.print("[bold cyan]3/4[/bold cyan] Matching and enrichment...")
         analyzed_results: list[AnalyzedBiomarker | None] = [None] * len(extracted_items)
+        supplemental_results: list[AnalyzedBiomarker] = []
         id_assignments: dict[str, tuple[int, str, float]] = {}
         pending_research_jobs: list[_PendingResearchJob] = []
+        deferred_computed_items: list[tuple[int, ExtractedBiomarker]] = []
         skipped_unit_assist_keys: set[tuple[str, str]] = set()
         max_parallel_research = min(8, max(1, len(extracted_items)))
         research_semaphore = asyncio.Semaphore(max_parallel_research)
@@ -700,25 +716,53 @@ async def _analyze_flow(
                 match_source: str,
             ):
                 nonlocal biomarkers_db
-                if match_source in ("exact_id", "ai", "fuzzy_high_confidence"):
+                if resolution.should_persist_match_alias(
+                    matched_entry, item, match_source
+                ):
                     biomarkers_db = db.add_alias_to_entry(
                         config.biomarkers_path,
                         biomarkers_db,
                         matched_entry.id,
                         item.raw_name,
                     )
+                    biomarkers_db = db.add_context_alias_to_entry(
+                        config.biomarkers_path,
+                        biomarkers_db,
+                        matched_entry.id,
+                        LearnedContextAlias(
+                            raw_name=item.raw_name,
+                            raw_unit=item.unit or None,
+                            specimen=item.specimen,
+                            representation=resolution.observed_representation(item),
+                        ),
+                    )
                     refreshed_entry = _entry_by_id(biomarkers_db, matched_entry.id)
                     if refreshed_entry:
                         matched_entry = refreshed_entry
 
-                analyzed_results[index] = logic.analyze_value(
+                analyzed = logic.analyze_value(
                     item.raw_name,
                     item.value,
                     item.unit,
                     matched_entry,
                     sex=effective_sex,
                     age=effective_age,
+                    specimen=item.specimen,
+                    semantic_value=item.semantic_value,
+                    measurement_qualifier=item.measurement_qualifier,
                 )
+                if item.raw_value_text and analyzed.semantic_value:
+                    biomarkers_db = db.add_value_alias_to_entry(
+                        config.biomarkers_path,
+                        biomarkers_db,
+                        matched_entry.id,
+                        LearnedValueAlias(
+                            raw_value=item.raw_value_text,
+                            semantic_value=analyzed.semantic_value,
+                            measurement_qualifier=analyzed.measurement_qualifier,
+                        ),
+                    )
+                analyzed_results[index] = analyzed
 
             def _assign_match(
                 index: int,
@@ -971,6 +1015,85 @@ async def _analyze_flow(
                 )
                 return matched_entry
 
+            async def _resolve_entry_for_item(
+                item: ExtractedBiomarker,
+                *,
+                allow_computed: bool = False,
+            ) -> tuple[str, BiomarkerEntry | None, str, float]:
+                candidate_entries = [
+                    entry
+                    for entry in biomarkers_db
+                    if (
+                        (allow_computed and (entry.kind == "computed" or entry.computed_definition is not None))
+                        or (not allow_computed and entry.kind != "computed")
+                    )
+                ]
+                context_match = resolution.find_context_alias_match(candidate_entries, item)
+                if context_match:
+                    return ("match", context_match, "context_alias", 950.0)
+
+                exact_match = db.find_exact_match(
+                    candidate_entries,
+                    item.raw_name,
+                    include_aliases=False,
+                )
+                if exact_match and resolution.is_entry_compatible(
+                    exact_match,
+                    item,
+                    allow_computed=allow_computed,
+                ):
+                    return ("match", exact_match, "exact_id", 1000.0)
+
+                if allow_computed or _can_use_exact_alias_match(item.raw_name):
+                    exact_alias_match = db.find_exact_match(
+                        candidate_entries,
+                        item.raw_name,
+                        include_aliases=True,
+                    )
+                    if exact_alias_match and (
+                        db.normalize_biomarker_name(exact_alias_match.id)
+                        != db.normalize_biomarker_name(item.raw_name)
+                    ) and resolution.is_entry_compatible(
+                        exact_alias_match,
+                        item,
+                        allow_computed=allow_computed,
+                    ):
+                        return ("match", exact_alias_match, "exact_alias", 900.0)
+
+                candidates = resolution.filter_candidates(
+                    db.find_fuzzy_candidates(candidate_entries, item.raw_name),
+                    item,
+                    allow_computed=allow_computed,
+                )
+                hc_entry = _high_confidence_candidate(candidates)
+                if hc_entry:
+                    return (
+                        "match",
+                        hc_entry,
+                        "fuzzy_high_confidence",
+                        candidates[0][2] if candidates else 0.0,
+                    )
+
+                decision, entry = await research_agent.disambiguate_biomarker(
+                    item.raw_name,
+                    candidates,
+                    config,
+                    client=ai_client,
+                    item=item,
+                    allow_computed=allow_computed,
+                )
+                if decision == "match" and entry:
+                    score = next(
+                        (
+                            candidate_score
+                            for candidate_entry, _label, candidate_score in candidates
+                            if candidate_entry.id == entry.id
+                        ),
+                        0.0,
+                    )
+                    return ("match", entry, "ai", score)
+                return (decision, None, "ai", 0.0)
+
             # Dedup extracted biomarkers by normalized raw name (keep first occurrence).
             seen_raw_names: dict[str, int] = {}
             dedup_indices_to_skip: set[int] = set()
@@ -991,137 +1114,70 @@ async def _analyze_flow(
                     progress.advance(overall_task)
                     continue
 
-                matched_entry: BiomarkerEntry | None = None
-                match_source = "ai"
-                match_score = 0.0
-                normalized_raw_name = db.normalize_biomarker_name(item.raw_name)
+                if resolution.is_computed_candidate(item):
+                    deferred_computed_items.append((index, item))
+                    continue
 
-                # Phase 1: Exact canonical-ID match only (aliases require AI validation)
-                exact_match = db.find_exact_match(
-                    biomarkers_db,
-                    item.raw_name,
-                    include_aliases=False,
+                decision, matched_entry, match_source, match_score = (
+                    await _resolve_entry_for_item(item)
                 )
-                if exact_match:
-                    matched_entry = exact_match
-                    match_source = "exact_id"
-                    match_score = 1000.0
-                    logger.debug(
-                        f"Exact match for '{item.raw_name}' -> {exact_match.id}"
+
+                if decision == "unknown":
+                    console.print(
+                        f"[dim]~ Skipped '{item.raw_name}' (not a biomarker)[/dim]"
                     )
+                    _store_unknown_result(index, item)
+                    progress.advance(overall_task)
+                    continue
 
-                # Phase 2: Exact trusted alias match (resilient when AI disambiguation is unavailable)
-                if not matched_entry and _can_use_exact_alias_match(item.raw_name):
-                    exact_alias_match = db.find_exact_match(
-                        biomarkers_db,
-                        item.raw_name,
-                        include_aliases=True,
-                    )
-                    if exact_alias_match and (
-                        db.normalize_biomarker_name(exact_alias_match.id)
-                        != normalized_raw_name
-                    ):
-                        matched_entry = exact_alias_match
-                        match_source = "exact_alias"
-                        match_score = 900.0
-                        logger.debug(
-                            "Exact alias match for '%s' -> %s",
-                            item.raw_name,
-                            exact_alias_match.id,
-                        )
-
-                # Phase 3: Fuzzy candidates + AI disambiguation
-                if not matched_entry:
-                    candidates = db.find_fuzzy_candidates(
-                        biomarkers_db, item.raw_name
-                    )
-
-                    # Try deterministic high-confidence match before AI.
-                    hc_entry = _high_confidence_candidate(candidates)
-                    if hc_entry:
-                        matched_entry = hc_entry
-                        match_source = "fuzzy_high_confidence"
-                        match_score = candidates[0][2] if candidates else 0.0
-                        logger.debug(
-                            "High-confidence fuzzy match for '%s' -> %s (score=%.1f)",
-                            item.raw_name, hc_entry.id, match_score,
-                        )
-
-                    if not matched_entry:
-                        decision, entry = await research_agent.disambiguate_biomarker(
-                            item.raw_name, candidates, config, client=ai_client
-                        )
-
-                        if decision == "match" and entry:
-                            matched_entry = entry
-                            match_source = "ai"
-                            match_score = next(
-                                (
-                                    score
-                                    for candidate_entry, _match_label, score in candidates
-                                    if candidate_entry.id == entry.id
-                                ),
-                                0.0,
-                            )
-                            logger.debug(
-                                f"AI confirmed match for '{item.raw_name}' -> {entry.id}"
-                            )
-                        elif decision == "unknown":
+                if decision == "research" and research_enabled:
+                    should_research = True
+                    if ask_before_research:
+                        if not sys.stdin.isatty():
                             console.print(
-                                f"[dim]~ Skipped '{item.raw_name}' (not a biomarker)[/dim]"
+                                f"[dim]~ Skipped '{item.raw_name}' (cannot prompt in non-interactive mode)[/dim]"
                             )
                             _store_unknown_result(index, item)
                             progress.advance(overall_task)
                             continue
-                        elif decision == "research" and research_enabled:
-                            should_research = True
-                            if ask_before_research:
-                                if not sys.stdin.isatty():
-                                    console.print(
-                                        f"[dim]~ Skipped '{item.raw_name}' (cannot prompt in non-interactive mode)[/dim]"
-                                    )
-                                    _store_unknown_result(index, item)
-                                    progress.advance(overall_task)
-                                    continue
-                                else:
-                                    progress.stop()
-                                    try:
-                                        should_research = typer.confirm(
-                                            (
-                                                f"Research unknown biomarker '{item.raw_name}'"
-                                                f" ({_format_value(item.value)} {item.unit})?"
-                                            ),
-                                            default=True,
-                                        )
-                                    finally:
-                                        progress.start()
-                            if not should_research:
-                                console.print(
-                                    f"[dim]~ Skipped '{item.raw_name}' (research declined)[/dim]"
-                                )
-                                _store_unknown_result(index, item)
-                                progress.advance(overall_task)
-                                continue
+                        progress.stop()
+                        try:
+                            should_research = typer.confirm(
+                                (
+                                    f"Research unknown biomarker '{item.raw_name}'"
+                                    f" ({_format_value(item.value)} {item.unit})?"
+                                ),
+                                default=True,
+                            )
+                        finally:
+                            progress.start()
+                    if not should_research:
+                        console.print(
+                            f"[dim]~ Skipped '{item.raw_name}' (research declined)[/dim]"
+                        )
+                        _store_unknown_result(index, item)
+                        progress.advance(overall_task)
+                        continue
 
-                            research_task_id = progress.add_task(
-                                description=f"Research '{item.raw_name}'",
-                                total=1,
-                                status="queued",
-                            )
-                            task = asyncio.create_task(
-                                _run_limited_research(index, item, research_task_id)
-                            )
-                            pending_research_jobs.append(
-                                _PendingResearchJob(
-                                    index=index,
-                                    item=item,
-                                    progress_task_id=research_task_id,
-                                    task=task,
-                                )
-                            )
-                            continue
+                    research_task_id = progress.add_task(
+                        description=f"Research '{item.raw_name}'",
+                        total=1,
+                        status="queued",
+                    )
+                    task = asyncio.create_task(
+                        _run_limited_research(index, item, research_task_id)
+                    )
+                    pending_research_jobs.append(
+                        _PendingResearchJob(
+                            index=index,
+                            item=item,
+                            progress_task_id=research_task_id,
+                            task=task,
+                        )
+                    )
+                    continue
 
-                if matched_entry:
+                if matched_entry and decision == "match":
                     matched_entry = await _maybe_assist_unit_conversion(
                         item, matched_entry
                     )
@@ -1267,6 +1323,150 @@ async def _analyze_flow(
                         _store_unknown_result(index, item)
                     progress.advance(overall_task)
 
+            if deferred_computed_items:
+                for index, item in deferred_computed_items:
+                    decision, matched_entry, _match_source, _match_score = (
+                        await _resolve_entry_for_item(item, allow_computed=True)
+                    )
+                    if (
+                        matched_entry is None
+                        and decision == "research"
+                        and research_enabled
+                    ):
+                        should_research = True
+                        if ask_before_research and sys.stdin.isatty():
+                            progress.stop()
+                            try:
+                                should_research = typer.confirm(
+                                    (
+                                        f"Research computed biomarker '{item.raw_name}'"
+                                        f" ({_format_value(item.value)} {item.unit})?"
+                                    ),
+                                    default=True,
+                                )
+                            finally:
+                                progress.start()
+                        elif ask_before_research and not sys.stdin.isatty():
+                            should_research = False
+
+                        if should_research:
+                            new_entry = await research_agent.research_biomarker(
+                                item.raw_name,
+                                config,
+                                extracted_unit=item.unit,
+                                client=ai_client,
+                                item=item,
+                                allow_computed=True,
+                            )
+                            if new_entry:
+                                existing_equivalent = db.find_match_for_entry(
+                                    biomarkers_db, new_entry
+                                )
+                                if existing_equivalent:
+                                    biomarkers_db = await db.amerge_researched_entry(
+                                        config.biomarkers_path,
+                                        biomarkers_db,
+                                        existing_equivalent.id,
+                                        new_entry,
+                                        item.raw_name,
+                                    )
+                                    matched_entry = _entry_by_id(
+                                        biomarkers_db, existing_equivalent.id
+                                    )
+                                else:
+                                    biomarkers_db = await db.aappend_to_db(
+                                        config.biomarkers_path,
+                                        biomarkers_db,
+                                        new_entry,
+                                    )
+                                    matched_entry = (
+                                        _entry_by_id(biomarkers_db, new_entry.id)
+                                        or new_entry
+                                    )
+
+                    current_results = [
+                        result
+                        for result in [*analyzed_results, *supplemental_results]
+                        if result is not None and result.biomarker_id != "unknown"
+                    ]
+                    if matched_entry:
+                        outcome = computed_logic.compute_entry(
+                            matched_entry,
+                            current_results,
+                        )
+                        if outcome:
+                            provenance = "computed"
+                            notes = [
+                                "Computed from " + ", ".join(outcome.dependencies)
+                            ]
+                            if computed_logic.values_match(
+                                item.value,
+                                outcome.value,
+                                outcome.tolerance,
+                            ):
+                                provenance = "verified_computed"
+                                notes.append("Observed report value verified")
+                            analyzed = logic.analyze_value(
+                                raw_name=item.raw_name,
+                                raw_value=outcome.value,
+                                raw_unit=matched_entry.canonical_unit,
+                                entry=matched_entry,
+                                sex=effective_sex,
+                                age=effective_age,
+                                specimen=item.specimen,
+                                semantic_value=item.semantic_value,
+                                measurement_qualifier=item.measurement_qualifier,
+                                provenance=provenance,
+                                derived_from=outcome.dependencies,
+                            )
+                            analyzed_results[index] = analyzed.model_copy(
+                                update={"notes": "; ".join(notes)}
+                            )
+                        else:
+                            _store_unknown_result(index, item)
+                    else:
+                        _store_unknown_result(index, item)
+                    progress.advance(overall_task)
+
+            present_ids = {
+                result.biomarker_id
+                for result in [*analyzed_results, *supplemental_results]
+                if result is not None and result.biomarker_id != "unknown"
+            }
+            computation_inputs = [
+                result
+                for result in [*analyzed_results, *supplemental_results]
+                if result is not None and result.biomarker_id != "unknown"
+            ]
+            for entry in biomarkers_db:
+                if entry.id in present_ids:
+                    continue
+                definition = entry.computed_definition
+                if definition is None or not definition.compute_when_missing:
+                    continue
+                outcome = computed_logic.compute_entry(entry, computation_inputs)
+                if outcome is None:
+                    continue
+                analyzed = logic.analyze_value(
+                    raw_name=entry.id,
+                    raw_value=outcome.value,
+                    raw_unit=entry.canonical_unit,
+                    entry=entry,
+                    sex=effective_sex,
+                    age=effective_age,
+                    specimen=entry.specimen,
+                    provenance="computed",
+                    derived_from=outcome.dependencies,
+                )
+                analyzed = analyzed.model_copy(
+                    update={
+                        "notes": "Computed from " + ", ".join(outcome.dependencies),
+                    }
+                )
+                supplemental_results.append(analyzed)
+                computation_inputs.append(analyzed)
+                present_ids.add(entry.id)
+
         analyzed_results = [
             result
             if result is not None
@@ -1280,11 +1480,17 @@ async def _analyze_flow(
             for index, result in enumerate(analyzed_results)
         ]
         report_results = (
-            analyzed_results
+            analyzed_results + supplemental_results
             if show_skipped
-            else [res for res in analyzed_results if res.biomarker_id != "unknown"]
+            else [
+                res
+                for res in [*analyzed_results, *supplemental_results]
+                if res.biomarker_id != "unknown"
+            ]
         )
-        skipped_count = len(analyzed_results) - len(report_results)
+        skipped_count = len(analyzed_results) - len(
+            [res for res in analyzed_results if res.biomarker_id != "unknown"]
+        )
 
         # 4. Output
         console.print("[bold cyan]4/4[/bold cyan] Rendering report...")

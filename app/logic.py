@@ -2,8 +2,10 @@ import logging
 import re
 from typing import Literal
 
-from simpleeval import NameNotDefined, simple_eval
+from simpleeval import simple_eval
 
+from . import interpretation
+from .semantics import semantic_value_from_text
 from .types import BiomarkerEntry, AnalyzedBiomarker
 
 
@@ -66,6 +68,8 @@ BOOLEAN_FALSE_VALUES = {
     "neg",
     "nonreactive",
     "notdetected",
+    "nondetected",
+    "undetected",
     "absent",
 }
 
@@ -236,6 +240,11 @@ def analyze_value(
     entry: BiomarkerEntry,
     sex: str | None = None,
     age: int | None = None,
+    specimen: str | None = None,
+    semantic_value: str | None = None,
+    measurement_qualifier: str | None = None,
+    provenance: str = "observed",
+    derived_from: list[str] | None = None,
 ) -> AnalyzedBiomarker:
     """
     Process a raw extraction against a known biomarker entry.
@@ -245,186 +254,22 @@ def analyze_value(
         raw_value, raw_unit, entry.canonical_unit, entry
     )
 
-    # Base ranges
-    min_normal = entry.min_normal
-    max_normal = entry.max_normal
-    normal_values = entry.normal_values
-    min_optimal = entry.min_optimal
-    max_optimal = entry.max_optimal
-    peak_value = entry.peak_value
+    resolved_semantic = semantic_value
+    if resolved_semantic is None and isinstance(final_val, str):
+        resolved_semantic = semantic_value_from_text(final_val, entry.learned_value_aliases)
 
-    # Redundant optimal range behaves as not provided.
-    if min_optimal == min_normal and max_optimal == max_normal:
-        min_optimal = None
-        max_optimal = None
-
-    value_type = _effective_value_type(entry, final_val)
-    normalized_sex = sex.lower().strip() if sex else None
-
-    # Apply demographic rules only for quantitative values.
-    if entry.reference_rules and value_type == "quantitative" and not isinstance(final_val, (str, bool)):
-        # Context available to reference rule expressions.
-        # Include defaults for common optional fields to reduce brittle NameNotDefined errors.
-        context = {
-            "sex": normalized_sex,
-            "age": age,
-            "male": "male",
-            "female": "female",
-            "value": final_val,
-            "pregnancy": None,
-            "trimester": None,
-            "has_heart_disease": False,
-            "statins": False,
-        }
-
-        # Sort by priority - higher priority rules apply later (overriding earlier ones)
-        sorted_rules = sorted(entry.reference_rules, key=lambda r: r.priority)
-
-        _UNREACHABLE_DEMOGRAPHICS = {"pregnancy", "trimester", "has_heart_disease", "statins"}
-
-        for rule in sorted_rules:
-            referenced_unreachable = {
-                var for var in _UNREACHABLE_DEMOGRAPHICS
-                if re.search(rf"\b{var}\b", rule.condition)
-            }
-            if referenced_unreachable:
-                logger.info(
-                    "Reference rule for '%s' uses demographics not settable via CLI: %s (condition: %s)",
-                    entry.id,
-                    ", ".join(sorted(referenced_unreachable)),
-                    rule.condition,
-                )
-
-            if age is None and _references_age(rule.condition):
-                # Age-specific rule cannot be evaluated without age context.
-                continue
-
-            try:
-                if simple_eval(rule.condition, names=context):
-                    if rule.min_normal is not None:
-                        min_normal = rule.min_normal
-                    if rule.max_normal is not None:
-                        max_normal = rule.max_normal
-            except NameNotDefined as exc:
-                logger.warning(
-                    "Skipping reference rule for '%s' due to unknown variable: %s (condition: %s)",
-                    entry.id,
-                    exc,
-                    rule.condition,
-                )
-            except TypeError as exc:
-                logger.debug(
-                    "Skipping reference rule for '%s' due to missing runtime context: %s (condition: %s)",
-                    entry.id,
-                    exc,
-                    rule.condition,
-                )
-            except Exception as exc:
-                logger.warning(
-                    "Skipping invalid reference rule for '%s': %s (condition: %s)",
-                    entry.id,
-                    exc,
-                    rule.condition,
-                )
-
-    status = "normal"
-    reference_status = "unknown"
-    optimal_status = "not_applicable"
-
-    if value_type == "quantitative":
-        # Unit mismatch means we cannot reliably compare against quantitative ranges.
-        if normalize_unit(final_unit) != normalize_unit(entry.canonical_unit):
-            reference_status = "unknown"
-        elif isinstance(final_val, (str, bool)):
-            reference_status = "unknown"
-        elif min_normal is not None and final_val < min_normal:
-            reference_status = "low"
-        elif max_normal is not None and final_val > max_normal:
-            reference_status = "high"
-        else:
-            reference_status = "normal"
-
-        if reference_status == "unknown":
-            optimal_status = "unknown"
-        elif isinstance(final_val, (int, float)):
-            if min_optimal is None and max_optimal is None:
-                optimal_status = "not_applicable"
-            elif min_optimal is not None and final_val < min_optimal:
-                optimal_status = "below_optimal"
-            elif max_optimal is not None and final_val > max_optimal:
-                optimal_status = "above_optimal"
-            else:
-                optimal_status = "optimal"
-        else:
-            optimal_status = "unknown"
-
-        if reference_status in {"low", "high", "unknown"}:
-            status = reference_status
-        elif optimal_status == "optimal":
-            status = "optimal"
-        elif optimal_status == "below_optimal":
-            status = "moderate"
-        elif optimal_status == "above_optimal":
-            status = "elevated"
-        else:
-            status = "normal"
-    elif value_type == "boolean":
-        parsed_bool = _to_boolean(final_val)
-        if parsed_bool is None:
-            status = "unknown"
-        else:
-            final_val = parsed_bool
-            if normal_values:
-                normal_bools = {_to_boolean(v) for v in normal_values}
-                normal_bools.discard(None)
-                if normal_bools:
-                    status = "normal" if parsed_bool in normal_bools else "abnormal"
-                else:
-                    normalized_values = {_normalize_token(v) for v in normal_values}
-                    status = (
-                        "normal"
-                        if _normalize_token(str(final_val)) in normalized_values
-                        else "abnormal"
-                    )
-            else:
-                status = "unknown"
-        reference_status = status
-        optimal_status = "not_applicable"
-    else:
-        # Enum qualitative.
-        final_val = str(final_val).strip()
-        normalized_value = _normalize_token(final_val)
-
-        if entry.enum_values:
-            allowed_values = {_normalize_token(v) for v in entry.enum_values}
-            if normalized_value not in allowed_values:
-                status = "unknown"
-
-        if status != "unknown":
-            if normal_values:
-                normalized_values = {_normalize_token(v) for v in normal_values}
-                status = "normal" if normalized_value in normalized_values else "abnormal"
-            else:
-                status = "unknown"
-        reference_status = status
-        optimal_status = "not_applicable"
-
-    notes = None
-    if normalize_unit(final_unit) != normalize_unit(raw_unit) or final_val != raw_value:
-        notes = f"Converted from {raw_value} {raw_unit}"
-
-    return AnalyzedBiomarker(
-        biomarker_id=entry.id,
-        display_name=raw_name,  # Could use entry.aliases[0] or entry.id for cleaner display
-        value=final_val,
-        unit=final_unit,
-        status=status,
-        reference_status=reference_status,
-        optimal_status=optimal_status,
-        notes=notes,
-        min_reference=min_normal,
-        max_reference=max_normal,
-        min_optimal=min_optimal,
-        max_optimal=max_optimal,
-        peak_value=peak_value,
+    return interpretation.interpret_value(
+        raw_name=raw_name,
+        raw_value=raw_value,
+        raw_unit=raw_unit,
+        final_val=final_val,
+        final_unit=final_unit,
+        entry=entry,
+        sex=sex,
+        age=age,
+        specimen=specimen,
+        semantic_value=resolved_semantic,
+        measurement_qualifier=measurement_qualifier,
+        provenance=provenance,
+        derived_from=derived_from,
     )

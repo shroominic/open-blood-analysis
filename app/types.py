@@ -3,6 +3,24 @@ from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 
 
+MeasurementQualifier = Literal[
+    "exact",
+    "below_limit",
+    "above_limit",
+    "below_detection",
+    "approximate",
+    "trace",
+    "unknown",
+]
+BiomarkerKind = Literal["direct", "computed"]
+InterpretationKind = Literal[
+    "quantitative_range",
+    "categorical_labels",
+    "ordinal_labels",
+    "computed_policy",
+]
+
+
 class ReferenceRangeRule(BaseModel):
     """Rules to modulate reference ranges based on demographics.
     Uses simpleeval for conditions.
@@ -16,6 +34,45 @@ class ReferenceRangeRule(BaseModel):
     priority: int = 0  # Higher priority rules applied last/overriding others
 
 
+class LearnedContextAlias(BaseModel):
+    raw_name: str
+    raw_unit: str | None = None
+    specimen: str | None = None
+    representation: str | None = None
+    confidence: float = 1.0
+    source: str = "ai"
+
+
+class LearnedValueAlias(BaseModel):
+    raw_value: str
+    semantic_value: str
+    measurement_qualifier: MeasurementQualifier | None = None
+    confidence: float = 1.0
+    source: str = "ai"
+
+
+class InterpretationPolicy(BaseModel):
+    kind: InterpretationKind = "quantitative_range"
+    label_map: dict[str, str] = Field(default_factory=dict)
+    ordered_values: list[str] = Field(default_factory=list)
+
+
+class ComputedDefinition(BaseModel):
+    dependencies: list[str] = Field(default_factory=list)
+    formula: str
+    tolerance: float | None = None
+    compute_when_missing: bool = False
+    emit_when_reported: bool = True
+
+    @model_validator(mode="after")
+    def _validate_definition(self) -> "ComputedDefinition":
+        if not self.formula.strip():
+            raise ValueError("computed formula must not be empty")
+        if not self.dependencies:
+            raise ValueError("computed definition must declare dependencies")
+        return self
+
+
 class BiomarkerEntry(BaseModel):
     """Core database entry for a known biomarker."""
 
@@ -25,6 +82,10 @@ class BiomarkerEntry(BaseModel):
     aliases: list[str] = Field(
         default_factory=list, description="List of common names/aliases"
     )
+    kind: BiomarkerKind = "direct"
+    analyte_family: str | None = None
+    specimen: str | None = None
+    representation: str | None = None
     canonical_unit: str = Field(
         ..., description="The standard unit used for storage and comparison"
     )
@@ -67,6 +128,10 @@ class BiomarkerEntry(BaseModel):
     # For qualitative biomarkers (e.g. "Negative", "Positive")
     # If set, any value in this list is considered Normal. Any value NOT in this list is High/Abnormal.
     normal_values: list[str] | None = None
+    interpretation: InterpretationPolicy | None = None
+    computed_definition: ComputedDefinition | None = None
+    learned_context_aliases: list[LearnedContextAlias] = Field(default_factory=list)
+    learned_value_aliases: list[LearnedValueAlias] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _validate_ranges(self) -> "BiomarkerEntry":
@@ -86,6 +151,26 @@ class BiomarkerEntry(BaseModel):
             raise ValueError(
                 f"min_optimal ({self.min_optimal}) must be <= max_optimal ({self.max_optimal})"
             )
+        if self.kind == "computed" and self.computed_definition is None:
+            raise ValueError("computed biomarker entries require computed_definition")
+        if self.representation is None:
+            if self.kind == "computed":
+                self.representation = "derived"
+            elif self.value_type == "boolean":
+                self.representation = "boolean"
+            elif self.value_type == "enum":
+                self.representation = "enum"
+            else:
+                self.representation = "quantitative"
+        if self.interpretation is None:
+            interpretation_kind: InterpretationKind = "quantitative_range"
+            if self.kind == "computed":
+                interpretation_kind = "computed_policy"
+            elif self.value_type == "boolean":
+                interpretation_kind = "categorical_labels"
+            elif self.value_type == "enum":
+                interpretation_kind = "ordinal_labels"
+            self.interpretation = InterpretationPolicy(kind=interpretation_kind)
         return self
 
 
@@ -95,6 +180,11 @@ class ExtractedBiomarker(BaseModel):
     raw_name: str
     value: float | str | bool
     unit: str
+    raw_value_text: str | None = None
+    specimen: str | None = None
+    measurement_qualifier: MeasurementQualifier | None = None
+    semantic_value: str | None = None
+    is_computed_candidate: bool = False
     flags: list[str] = Field(
         default_factory=list, description="Any H/L flags extracted"
     )
@@ -133,6 +223,10 @@ class AnalyzedBiomarker(BaseModel):
     value: float | str | bool
     unit: str
     status: str = "normal"  # e.g. low/high/optimal/normal_but_low_optimal
+    semantic_value: str | None = None
+    measurement_qualifier: MeasurementQualifier | None = None
+    provenance: Literal["observed", "computed", "verified_computed"] = "observed"
+    derived_from: list[str] = Field(default_factory=list)
     reference_status: str | None = None
     optimal_status: str | None = None
     notes: str | None = None

@@ -1,4 +1,12 @@
+import asyncio
+from pathlib import Path
+from typing import Awaitable
+
+from typer.testing import CliRunner
+
 from app.main import (
+    app,
+    _build_config,
     _can_use_exact_alias_match,
     _entries_equivalent,
     _entry_diff_rows,
@@ -7,6 +15,8 @@ from app.main import (
     _upsert_biomarker_entry,
 )
 from app.types import BiomarkerEntry, ExtractedBiomarker
+
+runner = CliRunner()
 
 
 def _entry(entry_id: str) -> BiomarkerEntry:
@@ -149,3 +159,92 @@ def test_can_use_exact_alias_match_blocks_computed_labels():
 def test_can_use_exact_alias_match_allows_direct_analyte_labels():
     assert _can_use_exact_alias_match("Omega 6 #") is True
     assert _can_use_exact_alias_match("Eicosapentaenoic Acid (EPA), C20:5 w3 #") is True
+
+
+def test_build_config_expands_biomarkers_path_override():
+    config = _build_config("~/custom-biomarkers.json")
+
+    assert config.biomarkers_path == str(Path("~/custom-biomarkers.json").expanduser())
+
+
+def test_cli_passes_biomarkers_path_to_analyze_flow(monkeypatch, tmp_path: Path):
+    captured: dict[str, object] = {}
+    biomarkers_path = tmp_path / "iterations" / "v2.json"
+
+    async def fake_analyze_flow(
+        file_path: str,
+        output: str | None,
+        research_enabled: bool,
+        ask_before_research: bool,
+        debug: bool = False,
+        sex: str | None = None,
+        age: int | None = None,
+        save_raw: str | None = None,
+        biomarkers_path: str | None = None,
+        show_skipped: bool = False,
+        review_decisions: bool = False,
+    ) -> None:
+        captured["file_path"] = file_path
+        captured["biomarkers_path"] = biomarkers_path
+
+    def run_sync(coro: Awaitable[object]) -> None:
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(coro)
+        finally:
+            loop.close()
+
+    monkeypatch.setattr("app.main._analyze_flow", fake_analyze_flow)
+    monkeypatch.setattr("app.main.asyncio.run", run_sync)
+
+    result = runner.invoke(
+        app,
+        ["report.pdf", "--biomarkers-path", str(biomarkers_path)],
+    )
+
+    assert result.exit_code == 0
+    assert captured == {
+        "file_path": "report.pdf",
+        "biomarkers_path": str(biomarkers_path),
+    }
+
+
+def test_cli_passes_biomarkers_path_to_reresearch_flow(monkeypatch, tmp_path: Path):
+    captured: dict[str, object] = {}
+    biomarkers_path = tmp_path / "iterations" / "v3.json"
+
+    async def fake_reresearch_flow(
+        biomarker_query: str,
+        debug: bool = False,
+        extracted_unit: str | None = None,
+        dry_run: bool = False,
+        biomarkers_path: str | None = None,
+    ) -> None:
+        captured["biomarker_query"] = biomarker_query
+        captured["biomarkers_path"] = biomarkers_path
+
+    def run_sync(coro: Awaitable[object]) -> None:
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(coro)
+        finally:
+            loop.close()
+
+    monkeypatch.setattr("app.main._reresearch_flow", fake_reresearch_flow)
+    monkeypatch.setattr("app.main.asyncio.run", run_sync)
+
+    result = runner.invoke(
+        app,
+        [
+            "--reresearch-biomarker",
+            "hdl_cholesterol",
+            "--biomarkers-path",
+            str(biomarkers_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured == {
+        "biomarker_query": "hdl_cholesterol",
+        "biomarkers_path": str(biomarkers_path),
+    }

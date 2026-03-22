@@ -16,6 +16,8 @@ def test_parse_llm_response_coerces_numeric_like_strings():
                     "value": "Negative",
                     "unit": "",
                     "flags": [],
+                    "specimen": "urine",
+                    "raw_value_text": "NEGATIVE",
                 },
             ],
             "notes": "Sample note",
@@ -41,8 +43,11 @@ def test_parse_llm_response_coerces_numeric_like_strings():
     assert biomarkers[0].value == 150.0
     assert biomarkers[1].value == 1.54
     assert biomarkers[2].value == 5.0
+    assert biomarkers[2].measurement_qualifier == "below_limit"
     assert biomarkers[3].value is True
     assert biomarkers[4].value == "Negative"
+    assert biomarkers[4].specimen == "urine"
+    assert biomarkers[4].raw_value_text == "NEGATIVE"
     assert metadata.patient.age == 44
     assert metadata.patient.gender == "male"
     assert metadata.lab.company_name == "MayerLab"
@@ -77,3 +82,23 @@ def test_parse_llm_response_metadata_falls_back_to_flat_keys():
     assert metadata.blood_collection.date == "2025-12-01"
     assert metadata.blood_collection.time == "07:45"
     assert metadata.blood_collection.datetime == "2025-12-01T07:45:00"
+
+
+def test_parse_llm_response_infers_urine_specimen_for_qualitative_urine_row():
+    content = json.dumps(
+        {
+            "data": [
+                {
+                    "raw_name": "Urobilinogen",
+                    "value": "Not detected",
+                    "unit": "",
+                    "flags": [],
+                }
+            ]
+        }
+    )
+
+    biomarkers, _notes, _metadata = _parse_llm_response(content)
+
+    assert biomarkers[0].specimen == "urine"
+    assert biomarkers[0].measurement_qualifier == "below_detection"

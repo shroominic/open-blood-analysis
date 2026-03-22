@@ -5,6 +5,7 @@ from typing import Any, List, Literal, Tuple
 
 from .config import Config
 from .ai_client import AIClient, build_ai_client, retry_async
+from .semantics import infer_specimen, parse_measurement_qualifier
 from .types import ExtractedBiomarker, ReportMetadata
 
 
@@ -28,7 +29,11 @@ def build_report_extraction_system_instruction(
         f"from {source_phrase}. Return ONLY a raw JSON object with a 'data' key "
         "containing a list of objects with: 'raw_name' (exact string from doc), "
         "'value' (number or string), 'unit' (string), 'flags' (list of strings "
-        "like 'High', 'Low'). Do not include normal ranges in the JSON. \n\n"
+        "like 'High', 'Low'), optional 'raw_value_text' (exact text from doc), "
+        "optional 'specimen' (blood/serum/plasma/urine if explicit or strongly implied), "
+        "optional 'measurement_qualifier' (exact/below_limit/above_limit/below_detection/trace/approximate), "
+        "and optional 'is_computed_candidate' (true for ratios, indices, scores, saturations, calculated markers). "
+        "Do not include normal ranges in the JSON. \n\n"
         "IMPORTANT: For general observations or qualitative assessments that are "
         "NOT specific biomarkers (e.g. 'Serum Appearance', 'Hemolysis Index', "
         "'Lipemia Index', 'Sample quality'), do NOT include them in the 'data' "
@@ -40,9 +45,10 @@ def build_report_extraction_system_instruction(
         "string|null, 'datetime': string|null}}. Use null for unknown values; do "
         "not invent missing info. \n\nFor qualitative tests that ARE biomarkers "
         "(e.g. Urine strip), return the exact string value (e.g. 'Negative', "
-        "'Positive', 'Trace') in the 'value' field. Do not convert 'Negative' to "
-        "-1. If numeric value is '< 5', extract 5 and add '<' to flags. Output "
-        "valid JSON only, no markdown markers."
+        "'Positive', 'Trace') in the 'value' field and preserve the exact document token in "
+        "'raw_value_text'. Do not convert 'Negative' to -1. If numeric value is '< 5', extract 5, "
+        "set 'raw_value_text' to the original token, and set 'measurement_qualifier' to 'below_limit'. "
+        "Output valid JSON only, no markdown markers."
     )
 
 
@@ -348,6 +354,11 @@ def _parse_llm_response(
             try:
                 val_raw = item.get("value")
                 raw_name = str(item.get("raw_name", "Unknown"))
+                raw_value_text = (
+                    str(item.get("raw_value_text")).strip()
+                    if item.get("raw_value_text") is not None
+                    else None
+                )
 
                 if val_raw is None:
                     logger.warning(f"Skipping biomarker '{raw_name}' with null value")
@@ -378,12 +389,21 @@ def _parse_llm_response(
                         raw_name=raw_name,
                         value=val,
                         unit=item.get("unit") or "",
+                        raw_value_text=raw_value_text or str(val_raw),
+                        specimen=item.get("specimen"),
+                        measurement_qualifier=item.get("measurement_qualifier")
+                        or parse_measurement_qualifier(raw_value_text or str(val_raw), flags),
+                        is_computed_candidate=bool(item.get("is_computed_candidate", False)),
                         flags=flags,
                     )
                 )
             except (ValueError, TypeError) as e:
                 logger.warning(f"Skipping invalid biomarker entry: {item} - Error: {e}")
                 continue
+
+        for biomarker in results:
+            if biomarker.specimen is None:
+                biomarker.specimen = infer_specimen(biomarker)
 
         return results, notes, metadata
 

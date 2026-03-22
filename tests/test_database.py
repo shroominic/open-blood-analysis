@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from app import database as db
-from app.types import BiomarkerEntry
+from app.types import BiomarkerEntry, LearnedContextAlias, LearnedValueAlias
 
 
 def _entry(entry_id: str, aliases: list[str]) -> BiomarkerEntry:
@@ -101,3 +101,48 @@ def test_merge_researched_entry_adds_aliases_instead_of_new_id(tmp_path: Path):
     final = next(e for e in merged if e.id == "hdl_cholesterol")
     assert "COLESTEROL HDL" in final.aliases
     assert "high_density_lipoprotein" in final.aliases
+
+
+def test_add_context_alias_to_entry_persists_specimen_and_unit(tmp_path: Path):
+    path = tmp_path / "biomarkers.json"
+    entries = [_entry("urine_bilirubin", ["Bilirubin"])]
+    db.save_db(str(path), entries)
+
+    updated = db.add_context_alias_to_entry(
+        str(path),
+        entries,
+        "urine_bilirubin",
+        LearnedContextAlias(
+            raw_name="Bilirubin",
+            raw_unit="",
+            specimen="urine",
+            representation="boolean",
+        ),
+    )
+
+    refreshed = next(e for e in updated if e.id == "urine_bilirubin")
+    assert refreshed.learned_context_aliases[0].specimen == "urine"
+
+
+def test_add_value_alias_to_entry_persists_semantic_mapping(tmp_path: Path):
+    path = tmp_path / "biomarkers.json"
+    entries = [_entry("nitrite", ["Nitrite"])]
+    db.save_db(str(path), entries)
+
+    updated = db.add_value_alias_to_entry(
+        str(path),
+        entries,
+        "nitrite",
+        LearnedValueAlias(raw_value="NEGATIF", semantic_value="negative"),
+    )
+
+    refreshed = next(e for e in updated if e.id == "nitrite")
+    assert refreshed.learned_value_aliases[0].semantic_value == "negative"
+
+
+def test_save_db_creates_missing_parent_directories(tmp_path: Path):
+    path = tmp_path / "iterations" / "candidate" / "biomarkers.v2.json"
+
+    db.save_db(str(path), [_entry("hdl_cholesterol", ["HDL"])])
+
+    assert path.exists()
