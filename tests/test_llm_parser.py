@@ -102,3 +102,22 @@ def test_parse_llm_response_infers_urine_specimen_for_qualitative_urine_row():
 
     assert biomarkers[0].specimen == "urine"
     assert biomarkers[0].measurement_qualifier == "below_detection"
+
+
+def test_parse_llm_response_infers_urine_specimen_for_urine_rbc_row():
+    content = json.dumps(
+        {
+            "data": [
+                {
+                    "raw_name": "RBC",
+                    "value": "NIL",
+                    "unit": "",
+                    "flags": [],
+                }
+            ]
+        }
+    )
+
+    biomarkers, _notes, _metadata = _parse_llm_response(content)
+
+    assert biomarkers[0].specimen == "urine"

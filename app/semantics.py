@@ -3,9 +3,11 @@ import re
 from .types import BiomarkerEntry, ExtractedBiomarker, LearnedValueAlias, MeasurementQualifier
 
 _URINE_ANALYTE_HINTS = {
+    "blood",
     "bilirubin",
     "epithelial",
     "epithelials",
+    "glucose",
     "ketone",
     "ketones",
     "leukocyte",
@@ -103,6 +105,8 @@ def infer_specimen(item: ExtractedBiomarker) -> str | None:
     if item.specimen:
         return normalize_specimen(item.specimen)
     if any(normalize_token(hint) in normalized for hint in _URINE_ANALYTE_HINTS):
+        return "urine"
+    if normalized in {"wbc", "rbc"} and isinstance(item.value, str):
         return "urine"
     if item.unit == "" and isinstance(item.value, str):
         semantic = semantic_value_from_text(item.raw_value_text or str(item.value))

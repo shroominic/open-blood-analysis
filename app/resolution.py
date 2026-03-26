@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from . import database as db
 from .semantics import (
     infer_specimen,
+    normalize_specimen,
+    normalize_token,
     is_percent_unit,
     is_potential_computed_label,
 )
@@ -123,4 +125,36 @@ def should_persist_match_alias(
     if match_source not in {"exact_id", "ai", "fuzzy_high_confidence", "research"}:
         return False
     return is_entry_compatible(entry, item, allow_computed=entry.kind == "computed")
+
+
+def extraction_dedup_key(item: ExtractedBiomarker) -> tuple[str, str, str, str, str, bool]:
+    normalized_name = db.normalize_biomarker_name(item.raw_name)
+    normalized_unit = normalize_token(item.unit)
+    normalized_specimen = normalize_specimen(item.specimen) or ""
+    normalized_qualifier = item.measurement_qualifier or ""
+    normalized_value = ""
+    if isinstance(item.value, bool):
+        normalized_value = "bool:true" if item.value else "bool:false"
+    elif isinstance(item.value, (int, float)):
+        normalized_value = f"num:{float(item.value):.12g}"
+    else:
+        normalized_value = f"str:{normalize_token(item.raw_value_text or item.value)}"
+    return (
+        normalized_name,
+        normalized_unit,
+        normalized_specimen,
+        normalized_qualifier,
+        normalized_value,
+        bool(item.is_computed_candidate),
+    )
+
+
+def research_key(item: ExtractedBiomarker) -> tuple[str, str, str, str, bool]:
+    return (
+        db.normalize_biomarker_name(item.raw_name),
+        normalize_token(item.unit),
+        normalize_specimen(item.specimen) or "",
+        observed_representation(item),
+        bool(item.is_computed_candidate),
+    )
 
