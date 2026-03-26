@@ -350,18 +350,25 @@ def _can_use_exact_alias_match(raw_name: str) -> bool:
 class _PendingResearchJob:
     index: int
     item: ExtractedBiomarker
+    research_key: tuple[str, str, str, str, bool]
+
+
+@dataclass
+class _PendingResearchGroup:
+    key: tuple[str, str, str, str, bool]
+    item: ExtractedBiomarker
     progress_task_id: int
-    task: asyncio.Task[tuple[int, BiomarkerEntry | None]]
+    task: asyncio.Task[BiomarkerEntry | None]
+    jobs: list[_PendingResearchJob]
 
 
 async def _run_research_job(
-    index: int,
     item: ExtractedBiomarker,
     config: Config,
     progress: Progress,
     progress_task_id: int,
     client=None,
-) -> tuple[int, BiomarkerEntry | None]:
+) -> BiomarkerEntry | None:
     progress.update(progress_task_id, fields={"status": "running"})
     entry: BiomarkerEntry | None = None
     try:
@@ -381,7 +388,7 @@ async def _run_research_job(
         completed=1,
         fields={"status": "done" if entry else "failed"},
     )
-    return index, entry
+    return entry
 
 
 @app.command()
@@ -679,7 +686,7 @@ async def _analyze_flow(
         analyzed_results: list[AnalyzedBiomarker | None] = [None] * len(extracted_items)
         supplemental_results: list[AnalyzedBiomarker] = []
         id_assignments: dict[str, tuple[int, str, float]] = {}
-        pending_research_jobs: list[_PendingResearchJob] = []
+        pending_research_groups: dict[tuple[str, str, str, str, bool], _PendingResearchGroup] = {}
         deferred_computed_items: list[tuple[int, ExtractedBiomarker]] = []
         skipped_unit_assist_keys: set[tuple[str, str]] = set()
         max_parallel_research = min(8, max(1, len(extracted_items)))
@@ -803,13 +810,19 @@ async def _analyze_flow(
                 )
 
             async def _run_limited_research(
-                index: int, item: ExtractedBiomarker, research_task_id: int
-            ) -> tuple[int, BiomarkerEntry | None]:
+                item: ExtractedBiomarker, research_task_id: int
+            ) -> BiomarkerEntry | None:
                 async with research_semaphore:
                     return await _run_research_job(
-                        index, item, config, progress, research_task_id,
+                        item, config, progress, research_task_id,
                         client=ai_client,
                     )
+
+            async def _await_research_group(
+                key: tuple[str, str, str, str, bool],
+                group: _PendingResearchGroup,
+            ) -> tuple[tuple[str, str, str, str, bool], BiomarkerEntry | None]:
+                return key, await group.task
 
             async def _resolve_binary_decision(
                 *,
@@ -1065,6 +1078,8 @@ async def _analyze_flow(
                     item,
                     allow_computed=allow_computed,
                 )
+                if not candidates and not candidate_entries:
+                    return ("research", None, "ai", 0.0)
                 hc_entry = _high_confidence_candidate(candidates)
                 if hc_entry:
                     return (
@@ -1094,19 +1109,20 @@ async def _analyze_flow(
                     return ("match", entry, "ai", score)
                 return (decision, None, "ai", 0.0)
 
-            # Dedup extracted biomarkers by normalized raw name (keep first occurrence).
-            seen_raw_names: dict[str, int] = {}
+            # Dedup only truly repeated extracted rows; do not collapse rows that
+            # merely share the same label but differ in value/unit/specimen.
+            seen_row_keys: dict[tuple[str, str, str, str, str, bool], int] = {}
             dedup_indices_to_skip: set[int] = set()
             for i, item in enumerate(extracted_items):
-                norm = db.normalize_biomarker_name(item.raw_name)
-                if norm in seen_raw_names:
+                dedup_key = resolution.extraction_dedup_key(item)
+                if dedup_key in seen_row_keys:
                     dedup_indices_to_skip.add(i)
                     logger.debug(
-                        "Skipping duplicate extraction '%s' at index %d (first seen at %d)",
-                        item.raw_name, i, seen_raw_names[norm],
+                        "Skipping duplicate extraction row '%s' at index %d (first seen at %d)",
+                        item.raw_name, i, seen_row_keys[dedup_key],
                     )
                 else:
-                    seen_raw_names[norm] = i
+                    seen_row_keys[dedup_key] = i
 
             for index, item in enumerate(extracted_items):
                 if index in dedup_indices_to_skip:
@@ -1159,21 +1175,43 @@ async def _analyze_flow(
                         progress.advance(overall_task)
                         continue
 
+                    pending_key = resolution.research_key(item)
+                    existing_group = pending_research_groups.get(pending_key)
+                    if existing_group is not None:
+                        logger.debug(
+                            "Reusing in-flight research for '%s' at index %d",
+                            item.raw_name,
+                            index,
+                        )
+                        existing_group.jobs.append(
+                            _PendingResearchJob(
+                                index=index,
+                                item=item,
+                                research_key=pending_key,
+                            )
+                        )
+                        continue
+
                     research_task_id = progress.add_task(
                         description=f"Research '{item.raw_name}'",
                         total=1,
                         status="queued",
                     )
                     task = asyncio.create_task(
-                        _run_limited_research(index, item, research_task_id)
+                        _run_limited_research(item, research_task_id)
                     )
-                    pending_research_jobs.append(
-                        _PendingResearchJob(
-                            index=index,
-                            item=item,
-                            progress_task_id=research_task_id,
-                            task=task,
-                        )
+                    pending_research_groups[pending_key] = _PendingResearchGroup(
+                        key=pending_key,
+                        item=item,
+                        progress_task_id=research_task_id,
+                        task=task,
+                        jobs=[
+                            _PendingResearchJob(
+                                index=index,
+                                item=item,
+                                research_key=pending_key,
+                            )
+                        ],
                     )
                     continue
 
@@ -1193,14 +1231,15 @@ async def _analyze_flow(
 
                 progress.advance(overall_task)
 
-            if pending_research_jobs:
-                jobs_by_index = {job.index: job for job in pending_research_jobs}
-                for completed_task in asyncio.as_completed(
-                    [job.task for job in pending_research_jobs]
-                ):
-                    index, new_entry = await completed_task
-                    job = jobs_by_index[index]
-                    item = job.item
+            if pending_research_groups:
+                grouped_awaitables = [
+                    _await_research_group(key, group)
+                    for key, group in pending_research_groups.items()
+                ]
+                for completed_task in asyncio.as_completed(grouped_awaitables):
+                    completed_key, new_entry = await completed_task
+                    group = pending_research_groups[completed_key]
+                    group_item = group.item
                     matched_entry: BiomarkerEntry | None = None
 
                     if new_entry:
@@ -1218,7 +1257,7 @@ async def _analyze_flow(
                                 await research_agent.recommend_merge_decision(
                                     new_entry=new_entry,
                                     existing_entry=existing_equivalent,
-                                    observed_raw_name=item.raw_name,
+                                    observed_raw_name=group_item.raw_name,
                                     config=config,
                                     client=ai_client,
                                 )
@@ -1252,7 +1291,7 @@ async def _analyze_flow(
                                     )
                                 else:
                                     progress.update(
-                                        job.progress_task_id,
+                                        group.progress_task_id,
                                         fields={"status": "awaiting merge input"},
                                     )
                                     progress.stop()
@@ -1270,13 +1309,13 @@ async def _analyze_flow(
                                     biomarkers_db,
                                     existing_equivalent.id,
                                     new_entry,
-                                    item.raw_name,
+                                    group_item.raw_name,
                                 )
                                 console.print(
                                     f"[cyan]~[/cyan] Merged researched aliases into existing: {existing_equivalent.id}"
                                 )
                                 progress.update(
-                                    job.progress_task_id,
+                                    group.progress_task_id,
                                     fields={"status": "done (merged)"},
                                 )
                                 matched_entry = _entry_by_id(
@@ -1290,7 +1329,7 @@ async def _analyze_flow(
                                     f"[green]+[/green] Added as separate biomarker: {new_entry.id}"
                                 )
                                 progress.update(
-                                    job.progress_task_id,
+                                    group.progress_task_id,
                                     fields={"status": "done (separate)"},
                                 )
                                 matched_entry = (
@@ -1305,23 +1344,24 @@ async def _analyze_flow(
                             matched_entry = new_entry
                     else:
                         console.print(
-                            f"[red]x[/red] Could not identify '{item.raw_name}'"
+                            f"[red]x[/red] Could not identify '{group_item.raw_name}'"
                         )
 
-                    if matched_entry:
-                        matched_entry = await _maybe_assist_unit_conversion(
-                            item, matched_entry
-                        )
-                        _assign_match(
-                            index,
-                            item,
-                            matched_entry,
-                            match_source="research",
-                            match_score=200.0,
-                        )
-                    else:
-                        _store_unknown_result(index, item)
-                    progress.advance(overall_task)
+                    for job in group.jobs:
+                        if matched_entry:
+                            job_matched_entry = await _maybe_assist_unit_conversion(
+                                job.item, matched_entry
+                            )
+                            _assign_match(
+                                job.index,
+                                job.item,
+                                job_matched_entry,
+                                match_source="research",
+                                match_score=200.0,
+                            )
+                        else:
+                            _store_unknown_result(job.index, job.item)
+                        progress.advance(overall_task)
 
             if deferred_computed_items:
                 for index, item in deferred_computed_items:
