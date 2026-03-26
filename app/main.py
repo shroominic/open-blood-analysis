@@ -357,7 +357,6 @@ class _PendingResearchJob:
 class _PendingResearchGroup:
     key: tuple[str, str, str, str, bool]
     item: ExtractedBiomarker
-    progress_task_id: int
     task: asyncio.Task[BiomarkerEntry | None]
     jobs: list[_PendingResearchJob]
 
@@ -365,11 +364,8 @@ class _PendingResearchGroup:
 async def _run_research_job(
     item: ExtractedBiomarker,
     config: Config,
-    progress: Progress,
-    progress_task_id: int,
     client=None,
 ) -> BiomarkerEntry | None:
-    progress.update(progress_task_id, fields={"status": "running"})
     entry: BiomarkerEntry | None = None
     try:
         entry = await research_agent.research_biomarker(
@@ -383,11 +379,6 @@ async def _run_research_job(
         logging.getLogger(__name__).exception(
             "Unhandled research task failure for '%s'", item.raw_name
         )
-    progress.update(
-        progress_task_id,
-        completed=1,
-        fields={"status": "done" if entry else "failed"},
-    )
     return entry
 
 
@@ -704,7 +695,7 @@ async def _analyze_flow(
             overall_task = progress.add_task(
                 description="Processing biomarkers",
                 total=len(extracted_items),
-                status=f"max parallel research: {max_parallel_research}",
+                status="resolving",
             )
 
             def _store_unknown_result(index: int, item: ExtractedBiomarker):
@@ -810,12 +801,11 @@ async def _analyze_flow(
                 )
 
             async def _run_limited_research(
-                item: ExtractedBiomarker, research_task_id: int
+                item: ExtractedBiomarker,
             ) -> BiomarkerEntry | None:
                 async with research_semaphore:
                     return await _run_research_job(
-                        item, config, progress, research_task_id,
-                        client=ai_client,
+                        item, config, client=ai_client,
                     )
 
             async def _await_research_group(
@@ -1192,18 +1182,12 @@ async def _analyze_flow(
                         )
                         continue
 
-                    research_task_id = progress.add_task(
-                        description=f"Research '{item.raw_name}'",
-                        total=1,
-                        status="queued",
-                    )
                     task = asyncio.create_task(
-                        _run_limited_research(item, research_task_id)
+                        _run_limited_research(item)
                     )
                     pending_research_groups[pending_key] = _PendingResearchGroup(
                         key=pending_key,
                         item=item,
-                        progress_task_id=research_task_id,
                         task=task,
                         jobs=[
                             _PendingResearchJob(
@@ -1232,6 +1216,11 @@ async def _analyze_flow(
                 progress.advance(overall_task)
 
             if pending_research_groups:
+                research_remaining = len(pending_research_groups)
+                progress.update(
+                    overall_task,
+                    status=f"awaiting {research_remaining} research result{'s' if research_remaining != 1 else ''}",
+                )
                 grouped_awaitables = [
                     _await_research_group(key, group)
                     for key, group in pending_research_groups.items()
@@ -1290,10 +1279,6 @@ async def _analyze_flow(
                                         "[dim]~ Merge review requested but non-interactive mode; using AI decision.[/dim]"
                                     )
                                 else:
-                                    progress.update(
-                                        group.progress_task_id,
-                                        fields={"status": "awaiting merge input"},
-                                    )
                                     progress.stop()
                                     try:
                                         should_merge = typer.confirm(
@@ -1314,10 +1299,6 @@ async def _analyze_flow(
                                 console.print(
                                     f"[cyan]~[/cyan] Merged researched aliases into existing: {existing_equivalent.id}"
                                 )
-                                progress.update(
-                                    group.progress_task_id,
-                                    fields={"status": "done (merged)"},
-                                )
                                 matched_entry = _entry_by_id(
                                     biomarkers_db, existing_equivalent.id
                                 )
@@ -1327,10 +1308,6 @@ async def _analyze_flow(
                                 )
                                 console.print(
                                     f"[green]+[/green] Added as separate biomarker: {new_entry.id}"
-                                )
-                                progress.update(
-                                    group.progress_task_id,
-                                    fields={"status": "done (separate)"},
                                 )
                                 matched_entry = (
                                     _entry_by_id(biomarkers_db, new_entry.id)
@@ -1362,8 +1339,15 @@ async def _analyze_flow(
                         else:
                             _store_unknown_result(job.index, job.item)
                         progress.advance(overall_task)
+                    research_remaining -= 1
+                    if research_remaining > 0:
+                        progress.update(
+                            overall_task,
+                            status=f"awaiting {research_remaining} research result{'s' if research_remaining != 1 else ''}",
+                        )
 
             if deferred_computed_items:
+                progress.update(overall_task, status="computed biomarkers")
                 for index, item in deferred_computed_items:
                     decision, matched_entry, _match_source, _match_score = (
                         await _resolve_entry_for_item(item, allow_computed=True)
