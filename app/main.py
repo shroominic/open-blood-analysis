@@ -46,9 +46,6 @@ CLEANUP_PATHS: Set[str] = set()
 def cleanup():
     """Final cleanup of temp files created by this process."""
     for path in CLEANUP_PATHS:
-        if path.endswith(".lock"):
-            # Never remove shared lock files.
-            continue
         if os.path.exists(path):
             try:
                 if os.path.isdir(path):

@@ -45,12 +45,20 @@ def load_file_as_images(file_path: str) -> List[str]:
     return image_paths
 
 
-def cleanup_images(image_paths: List[str]):
-    """Removes temporary image files."""
+def cleanup_images(image_paths: list[str]) -> None:
+    """Removes temporary image files and their parent temp directory."""
+    dirs_to_remove: set[str] = set()
     for path in image_paths:
-        if "oba_" in path and os.path.exists(path):
+        if "oba_" not in path:
+            continue
+        dirs_to_remove.add(os.path.dirname(path))
+        if os.path.exists(path):
             try:
                 os.remove(path)
             except OSError:
                 pass
-    # Basic cleanup, potentially leaving empty temp dirs but acceptable for MVP CLI
+    for d in dirs_to_remove:
+        try:
+            os.rmdir(d)
+        except OSError:
+            pass

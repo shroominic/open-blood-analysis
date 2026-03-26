@@ -8,6 +8,15 @@ from pathlib import Path
 from typing import List, Optional
 from filelock import FileLock
 
+_lock_cache: dict[str, FileLock] = {}
+
+
+def _get_lock(path: str) -> FileLock:
+    lock_path = path + ".lock"
+    if lock_path not in _lock_cache:
+        _lock_cache[lock_path] = FileLock(lock_path, is_singleton=True)
+    return _lock_cache[lock_path]
+
 try:
     from rapidfuzz import process, fuzz
 except ImportError:
@@ -92,10 +101,7 @@ def load_db(path: str) -> List[BiomarkerEntry]:
         save_db(path, [])
         return []
 
-    lock_path = path + ".lock"
-    lock = FileLock(lock_path)
-
-    with lock:
+    with _get_lock(path):
         with open(path, "r") as f:
             try:
                 data = json.load(f)
@@ -111,10 +117,8 @@ def load_db(path: str) -> List[BiomarkerEntry]:
 def save_db(path: str, entries: List[BiomarkerEntry]):
     """Writes database entries to disk."""
     _ensure_parent_dir(path)
-    lock_path = path + ".lock"
-    lock = FileLock(lock_path)
 
-    with lock:
+    with _get_lock(path):
         with open(path, "w") as f:
             json.dump([entry.model_dump() for entry in entries], f, indent=2)
 
@@ -219,10 +223,8 @@ def add_alias_to_entry(
         return entries
 
     _ensure_parent_dir(path)
-    lock_path = path + ".lock"
-    lock = FileLock(lock_path)
 
-    with lock:
+    with _get_lock(path):
         current_entries = []
         if os.path.exists(path):
             with open(path, "r") as f:
@@ -265,10 +267,8 @@ def add_context_alias_to_entry(
     alias: LearnedContextAlias,
 ) -> List[BiomarkerEntry]:
     _ensure_parent_dir(path)
-    lock_path = path + ".lock"
-    lock = FileLock(lock_path)
 
-    with lock:
+    with _get_lock(path):
         current_entries = []
         if os.path.exists(path):
             with open(path, "r") as f:
@@ -305,10 +305,8 @@ def add_value_alias_to_entry(
     alias: LearnedValueAlias,
 ) -> List[BiomarkerEntry]:
     _ensure_parent_dir(path)
-    lock_path = path + ".lock"
-    lock = FileLock(lock_path)
 
-    with lock:
+    with _get_lock(path):
         current_entries = []
         if os.path.exists(path):
             with open(path, "r") as f:
@@ -392,10 +390,8 @@ def append_to_db(
     Uses file locking to safely read-check-write.
     """
     _ensure_parent_dir(path)
-    lock_path = path + ".lock"
-    lock = FileLock(lock_path)
 
-    with lock:
+    with _get_lock(path):
         # Re-load current state from disk within lock to be safe against interleaved writes
         current_entries = []
         if os.path.exists(path):
