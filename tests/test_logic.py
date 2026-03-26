@@ -434,3 +434,58 @@ def test_analyze_value_normalizes_label_map_status_values():
 
     assert normal.status == "normal"
     assert trace.status == "moderate"
+
+
+def test_analyze_value_enum_can_use_boolean_input_with_negative_mapping():
+    entry = BiomarkerEntry(
+        id="urine_nitrite",
+        aliases=["Nitrite"],
+        canonical_unit="",
+        value_type="enum",
+        enum_values=["negative", "positive"],
+        normal_values=["negative"],
+        conversions={},
+        interpretation={
+            "kind": "ordinal_labels",
+            "label_map": {
+                "negative": "normal",
+                "positive": "abnormal",
+            },
+        },
+    )
+
+    result = analyze_value(
+        raw_name="Nitrite",
+        raw_value=False,
+        raw_unit="",
+        entry=entry,
+    )
+
+    assert result.status == "normal"
+
+
+def test_analyze_value_normalizes_verbose_normal_label():
+    entry = BiomarkerEntry(
+        id="urine_nitrite",
+        aliases=["Nitrite"],
+        canonical_unit="",
+        value_type="boolean",
+        normal_values=["negative"],
+        conversions={},
+        interpretation={
+            "kind": "categorical_labels",
+            "label_map": {
+                "negative": "Normal (no bacterial conversion of nitrate detected)",
+                "positive": "Abnormal (indicates likely bacterial infection)",
+            },
+        },
+    )
+
+    result = analyze_value(
+        raw_name="Nitrite",
+        raw_value=False,
+        raw_unit="",
+        entry=entry,
+    )
+
+    assert result.status == "normal"

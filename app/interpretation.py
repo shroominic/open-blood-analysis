@@ -59,8 +59,16 @@ def _normalize_status_label(label: str) -> str:
         return _CANONICAL_STATUS_BY_TOKEN[token]
     if "trace" in token and "abnormal" in token:
         return "moderate"
+    if "normal" in token:
+        return "normal"
     if "abnormal" in token:
         return "abnormal"
+    if "optimal" in token:
+        return "optimal"
+    if "high" in token:
+        return "high"
+    if "low" in token:
+        return "low"
     return "unknown"
 
 
@@ -333,11 +341,11 @@ def _apply_ordinal_labels(
     provenance: str,
     derived_from: list[str],
 ) -> AnalyzedBiomarker:
-    resolved_value = semantic_value or (
-        semantic_value_from_text(final_val, entry.learned_value_aliases)
-        if isinstance(final_val, str)
-        else None
-    )
+    resolved_value = semantic_value
+    if resolved_value is None and isinstance(final_val, bool):
+        resolved_value = "positive" if final_val else "negative"
+    if resolved_value is None and isinstance(final_val, str):
+        resolved_value = semantic_value_from_text(final_val, entry.learned_value_aliases)
     resolved_value = resolved_value or str(final_val).strip()
     normalized_value = normalize_token(resolved_value)
     if entry.enum_values:
