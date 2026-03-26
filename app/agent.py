@@ -4,12 +4,195 @@ from typing import Any, List, Literal
 
 from .config import Config
 from .ai_client import AIClient, build_ai_client, retry_async
+from .semantics import normalize_specimen, normalize_token, semantic_value_from_text
 from .types import BiomarkerEntry, ExtractedBiomarker
 
 logger = logging.getLogger(__name__)
 
 
-def _sanitize_research_payload(data: dict) -> dict:
+_URINE_ID_REWRITE = {
+    "blood_ph": "urine_ph",
+    "bilirubin": "urine_bilirubin",
+    "urobilinogen": "urine_urobilinogen",
+    "protein": "urine_protein",
+    "glucose": "urine_glucose",
+    "ketone": "urine_ketone",
+    "ketones": "urine_ketone",
+    "nitrite": "urine_nitrite",
+    "leukocyte": "urine_leukocyte",
+    "blood": "urine_blood",
+    "epithelial_cells": "urine_epithelial_cells",
+    "white_blood_cell_count": "urine_white_blood_cells",
+    "red_blood_cell_count": "urine_red_blood_cells",
+}
+_URINE_RANGE_OVERRIDES: dict[str, dict[str, Any]] = {
+    "urine_ph": {
+        "min_normal": 4.5,
+        "max_normal": 8.0,
+        "min_optimal": 5.5,
+        "max_optimal": 6.5,
+        "peak_value": None,
+    }
+}
+_URINE_SEMIQUANT_VALUES = ["negative", "trace", "1+", "2+", "3+", "4+"]
+
+
+def _fallback_biomarker_from_context(
+    biomarker_name: str,
+    item: ExtractedBiomarker | None,
+) -> BiomarkerEntry | None:
+    if item is None:
+        return None
+    if normalize_specimen(item.specimen) != "urine":
+        return None
+
+    raw_name = normalize_token(item.raw_name or biomarker_name)
+    semantic_value = semantic_value_from_text(item.raw_value_text or str(item.value))
+
+    def _enum_entry(
+        *,
+        entry_id: str,
+        aliases: list[str],
+        ordered_values: list[str],
+        normal_values: list[str],
+    ) -> BiomarkerEntry:
+        return BiomarkerEntry(
+            id=entry_id,
+            aliases=aliases,
+            kind="direct",
+            specimen="urine",
+            representation="semiquantitative",
+            canonical_unit="",
+            value_type="enum",
+            enum_values=ordered_values,
+            normal_values=normal_values,
+            interpretation={
+                "kind": "ordinal_labels",
+                "label_map": {
+                    ordered_values[0]: "normal",
+                    ordered_values[1]: "moderate" if len(ordered_values) > 1 else "normal",
+                    **{
+                        value: "abnormal"
+                        for value in ordered_values[2:]
+                    },
+                },
+                "ordered_values": ordered_values,
+            },
+            conversions={},
+        )
+
+    if raw_name == "ph":
+        return BiomarkerEntry(
+            id="urine_ph",
+            aliases=["pH", "Urine pH", "Urinary pH"],
+            kind="direct",
+            specimen="urine",
+            representation="quantitative",
+            canonical_unit="pH",
+            value_type="quantitative",
+            min_normal=4.5,
+            max_normal=8.0,
+            min_optimal=5.5,
+            max_optimal=6.5,
+            conversions={},
+        )
+    if raw_name == "nitrite":
+        return BiomarkerEntry(
+            id="urine_nitrite",
+            aliases=["Nitrite", "Urine Nitrite"],
+            kind="direct",
+            specimen="urine",
+            representation="boolean",
+            canonical_unit="",
+            value_type="boolean",
+            normal_values=["negative", "not detected"],
+            interpretation={
+                "kind": "categorical_labels",
+                "label_map": {
+                    "negative": "normal",
+                    "positive": "abnormal",
+                },
+            },
+            conversions={},
+        )
+    if raw_name == "urobilinogen":
+        return BiomarkerEntry(
+            id="urine_urobilinogen",
+            aliases=["Urobilinogen", "Urine Urobilinogen"],
+            kind="direct",
+            specimen="urine",
+            representation="semiquantitative",
+            canonical_unit="",
+            value_type="enum",
+            enum_values=["negative", "normal", "1+", "2+", "3+", "4+"],
+            normal_values=["negative", "normal"],
+            interpretation={
+                "kind": "ordinal_labels",
+                "label_map": {
+                    "negative": "normal",
+                    "normal": "normal",
+                    "1+": "abnormal",
+                    "2+": "abnormal",
+                    "3+": "abnormal",
+                    "4+": "abnormal",
+                },
+                "ordered_values": ["negative", "normal", "1+", "2+", "3+", "4+"],
+            },
+            conversions={},
+        )
+    if raw_name in {"protein", "glucose", "ketone", "bilirubin", "blood", "leukocyte"}:
+        entry_id_map = {
+            "protein": "urine_protein",
+            "glucose": "urine_glucose",
+            "ketone": "urine_ketone",
+            "bilirubin": "urine_bilirubin",
+            "blood": "urine_blood",
+            "leukocyte": "urine_leukocyte_esterase",
+        }
+        return _enum_entry(
+            entry_id=entry_id_map[raw_name],
+            aliases=[item.raw_name, f"Urine {item.raw_name}"],
+            ordered_values=_URINE_SEMIQUANT_VALUES,
+            normal_values=["negative"],
+        )
+    if raw_name in {"wbc", "rbc", "epithelials"} or semantic_value == "none":
+        entry_id_map = {
+            "wbc": "urine_white_blood_cells",
+            "rbc": "urine_red_blood_cells",
+            "epithelials": "urine_epithelial_cells",
+        }
+        entry_id = entry_id_map.get(raw_name, "urine_epithelial_cells")
+        return BiomarkerEntry(
+            id=entry_id,
+            aliases=[item.raw_name],
+            kind="direct",
+            specimen="urine",
+            representation="enum",
+            canonical_unit="",
+            value_type="enum",
+            enum_values=["none", "few", "moderate", "many"],
+            normal_values=["none", "few"],
+            interpretation={
+                "kind": "ordinal_labels",
+                "label_map": {
+                    "none": "normal",
+                    "few": "normal",
+                    "moderate": "abnormal",
+                    "many": "abnormal",
+                },
+                "ordered_values": ["none", "few", "moderate", "many"],
+            },
+            conversions={},
+        )
+    return None
+
+
+def _sanitize_research_payload(
+    data: dict,
+    *,
+    extracted_unit: str | None = None,
+    item: ExtractedBiomarker | None = None,
+) -> dict:
     """
     Normalize optional range metadata from research responses.
     """
@@ -21,6 +204,122 @@ def _sanitize_research_payload(data: dict) -> dict:
     if min_optimal == min_normal and max_optimal == max_normal:
         data["min_optimal"] = None
         data["max_optimal"] = None
+
+    value_type = data.get("value_type")
+    if value_type not in {"quantitative", "boolean", "enum"}:
+        if item is not None and isinstance(item.value, (str, bool)) and not item.unit:
+            value_type = "enum"
+        else:
+            value_type = "quantitative"
+    data["value_type"] = value_type
+
+    canonical_unit = data.get("canonical_unit")
+    if canonical_unit is None:
+        canonical_unit = ""
+    if not canonical_unit and extracted_unit and data.get("value_type", "quantitative") == "quantitative":
+        canonical_unit = extracted_unit
+    if not canonical_unit and item and item.raw_name.strip().lower() == "ph":
+        canonical_unit = "pH"
+    data["canonical_unit"] = str(canonical_unit)
+
+    if item is not None:
+        observed_specimen = normalize_specimen(item.specimen)
+        if observed_specimen and not data.get("specimen"):
+            data["specimen"] = observed_specimen
+        if (
+            (observed_specimen == "urine" or (item.raw_name.strip().lower() == "ph" and not item.unit))
+            and str(data.get("id", "") or "").strip() == "blood_ph"
+        ):
+            data["id"] = "urine_ph"
+            data["specimen"] = "urine"
+        if observed_specimen == "urine":
+            biomarker_id = str(data.get("id", "") or "").strip()
+            if biomarker_id in _URINE_ID_REWRITE:
+                data["id"] = _URINE_ID_REWRITE[biomarker_id]
+                biomarker_id = data["id"]
+            if biomarker_id in _URINE_RANGE_OVERRIDES:
+                data.update(_URINE_RANGE_OVERRIDES[biomarker_id])
+            if isinstance(item.value, (str, bool)) and not item.unit:
+                if data.get("id") != "urine_urobilinogen":
+                    data["canonical_unit"] = ""
+                if data.get("value_type") == "quantitative":
+                    data["value_type"] = "enum"
+                if not data.get("representation"):
+                    data["representation"] = (
+                        "semiquantitative"
+                        if data.get("value_type") == "enum"
+                        else "boolean"
+                    )
+                if data.get("value_type") == "enum":
+                    if not data.get("enum_values"):
+                        data["enum_values"] = [
+                            "negative",
+                            "trace",
+                            "1+",
+                            "2+",
+                            "3+",
+                            "4+",
+                        ]
+                    if not data.get("normal_values"):
+                        data["normal_values"] = ["negative"]
+                    interpretation = data.get("interpretation") or {}
+                    interpretation["kind"] = "ordinal_labels"
+                    interpretation.setdefault(
+                        "label_map",
+                        {
+                            "negative": "normal",
+                            "trace": "moderate",
+                            "1+": "abnormal",
+                            "2+": "abnormal",
+                            "3+": "abnormal",
+                            "4+": "abnormal",
+                        },
+                    )
+                    interpretation.setdefault(
+                        "ordered_values",
+                        ["negative", "trace", "1+", "2+", "3+", "4+"],
+                    )
+                    data["interpretation"] = interpretation
+
+    interpretation = data.get("interpretation") or {}
+    raw_label_map = interpretation.get("label_map") or {}
+    sanitized_label_map: dict[str, str] = {}
+    if isinstance(raw_label_map, dict):
+        for key, value in raw_label_map.items():
+            if isinstance(value, str):
+                sanitized_label_map[str(key)] = value
+    interpretation["label_map"] = sanitized_label_map
+    if not isinstance(interpretation.get("ordered_values"), list):
+        interpretation["ordered_values"] = []
+
+    if data.get("value_type") == "quantitative":
+        interpretation["kind"] = (
+            "computed_policy"
+            if data.get("kind") == "computed"
+            else "quantitative_range"
+        )
+        interpretation["label_map"] = {}
+        interpretation["ordered_values"] = []
+    data["interpretation"] = interpretation
+
+    normalized_learned_value_aliases: list[dict[str, Any]] = []
+    for alias in data.get("learned_value_aliases") or []:
+        if not isinstance(alias, dict):
+            continue
+        raw_value = alias.get("raw_value", alias.get("alias"))
+        semantic_value = alias.get("semantic_value", alias.get("value"))
+        if raw_value is None or semantic_value is None:
+            continue
+        normalized_learned_value_aliases.append(
+            {
+                "raw_value": str(raw_value),
+                "semantic_value": str(semantic_value),
+                "measurement_qualifier": alias.get("measurement_qualifier"),
+                "confidence": float(alias.get("confidence", 1.0)),
+                "source": str(alias.get("source", "ai")),
+            }
+        )
+    data["learned_value_aliases"] = normalized_learned_value_aliases
 
     return data
 
@@ -480,17 +779,21 @@ async def research_biomarker(
         logger.debug("Received response from Research Agent.")
 
         if not content:
-            return None
+            return _fallback_biomarker_from_context(biomarker_name, item)
 
         content = _extract_json_payload(content)
 
         data = json.loads(content)
         if not isinstance(data, dict):
-            return None
-        data = _sanitize_research_payload(data)
+            return _fallback_biomarker_from_context(biomarker_name, item)
+        data = _sanitize_research_payload(
+            data,
+            extracted_unit=extracted_unit,
+            item=item,
+        )
         data["source"] = f"research-agent-{config.ai_provider}"
         return BiomarkerEntry(**data)
 
     except Exception as e:
         logger.error(f"Failed to research biomarker: {e}")
-        return None
+        return _fallback_biomarker_from_context(biomarker_name, item)
