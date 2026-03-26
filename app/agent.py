@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from typing import Any, List, Literal
@@ -70,11 +71,10 @@ def _fallback_biomarker_from_context(
                 "kind": "ordinal_labels",
                 "label_map": {
                     ordered_values[0]: "normal",
-                    ordered_values[1]: "moderate" if len(ordered_values) > 1 else "normal",
-                    **{
-                        value: "abnormal"
-                        for value in ordered_values[2:]
-                    },
+                    ordered_values[1]: "moderate"
+                    if len(ordered_values) > 1
+                    else "normal",
+                    **{value: "abnormal" for value in ordered_values[2:]},
                 },
                 "ordered_values": ordered_values,
             },
@@ -216,7 +216,11 @@ def _sanitize_research_payload(
     canonical_unit = data.get("canonical_unit")
     if canonical_unit is None:
         canonical_unit = ""
-    if not canonical_unit and extracted_unit and data.get("value_type", "quantitative") == "quantitative":
+    if (
+        not canonical_unit
+        and extracted_unit
+        and data.get("value_type", "quantitative") == "quantitative"
+    ):
         canonical_unit = extracted_unit
     if not canonical_unit and item and item.raw_name.strip().lower() == "ph":
         canonical_unit = "pH"
@@ -227,9 +231,9 @@ def _sanitize_research_payload(
         if observed_specimen and not data.get("specimen"):
             data["specimen"] = observed_specimen
         if (
-            (observed_specimen == "urine" or (item.raw_name.strip().lower() == "ph" and not item.unit))
-            and str(data.get("id", "") or "").strip() == "blood_ph"
-        ):
+            observed_specimen == "urine"
+            or (item.raw_name.strip().lower() == "ph" and not item.unit)
+        ) and str(data.get("id", "") or "").strip() == "blood_ph":
             data["id"] = "urine_ph"
             data["specimen"] = "urine"
         if observed_specimen == "urine":
@@ -337,7 +341,9 @@ def _extract_json_payload(content: str) -> str:
 
 
 async def disambiguate_biomarker(
-    raw_name: str, candidates: List[tuple[BiomarkerEntry, str, float]], config: Config,
+    raw_name: str,
+    candidates: List[tuple[BiomarkerEntry, str, float]],
+    config: Config,
     client: AIClient | None = None,
     item: ExtractedBiomarker | None = None,
     allow_computed: bool = False,
@@ -560,7 +566,9 @@ async def recommend_binary_decision(
             return None
         return _parse_binary_decision_payload(data)
     except Exception as exc:
-        logger.error("Failed binary decision recommendation (%s): %s", decision_name, exc)
+        logger.error(
+            "Failed binary decision recommendation (%s): %s", decision_name, exc
+        )
         return None
 
 
@@ -634,7 +642,9 @@ async def recommend_merge_decision(
 
 
 async def research_biomarker(
-    biomarker_name: str, config: Config, extracted_unit: str | None = None,
+    biomarker_name: str,
+    config: Config,
+    extracted_unit: str | None = None,
     client: AIClient | None = None,
     item: ExtractedBiomarker | None = None,
     allow_computed: bool = False,
@@ -763,37 +773,77 @@ async def research_biomarker(
     Return ONLY valid JSON.
     """
 
-    try:
-        logger.debug(
-            "Researching '%s' using %s provider with search-enabled prompt (%s)...",
-            biomarker_name,
-            config.ai_provider,
-            config.research,
-        )
+    max_attempts = 3
+    last_err: Exception | None = None
 
-        content = await retry_async(
-            client.prompt_json_with_search,
-            model=config.research,
-            prompt=prompt,
-        )
-        logger.debug("Received response from Research Agent.")
+    for attempt in range(max_attempts):
+        try:
+            logger.debug(
+                "Researching '%s' using %s provider with search-enabled prompt (%s)... (attempt %d/%d)",
+                biomarker_name,
+                config.ai_provider,
+                config.research,
+                attempt + 1,
+                max_attempts,
+            )
 
-        if not content:
-            return _fallback_biomarker_from_context(biomarker_name, item)
+            content = await retry_async(
+                client.prompt_json_with_search,
+                model=config.research,
+                prompt=prompt,
+            )
+            logger.debug("Received response from Research Agent.")
 
-        content = _extract_json_payload(content)
+            if not content:
+                logger.warning(
+                    "Empty research response for '%s' (attempt %d/%d)",
+                    biomarker_name,
+                    attempt + 1,
+                    max_attempts,
+                )
+                last_err = ValueError("empty response")
+                if attempt < max_attempts - 1:
+                    await asyncio.sleep(1.0 * (2**attempt))
+                continue
 
-        data = json.loads(content)
-        if not isinstance(data, dict):
-            return _fallback_biomarker_from_context(biomarker_name, item)
-        data = _sanitize_research_payload(
-            data,
-            extracted_unit=extracted_unit,
-            item=item,
-        )
-        data["source"] = f"research-agent-{config.ai_provider}"
-        return BiomarkerEntry(**data)
+            content = _extract_json_payload(content)
 
-    except Exception as e:
-        logger.error(f"Failed to research biomarker: {e}")
-        return _fallback_biomarker_from_context(biomarker_name, item)
+            data = json.loads(content)
+            if not isinstance(data, dict):
+                logger.warning(
+                    "Non-dict research response for '%s' (attempt %d/%d): type=%s",
+                    biomarker_name,
+                    attempt + 1,
+                    max_attempts,
+                    type(data).__name__,
+                )
+                last_err = TypeError(f"expected dict, got {type(data).__name__}")
+                if attempt < max_attempts - 1:
+                    await asyncio.sleep(1.0 * (2**attempt))
+                continue
+
+            data = _sanitize_research_payload(
+                data, extracted_unit=extracted_unit, item=item,
+            )
+            data["source"] = f"research-agent-{config.ai_provider}"
+            return BiomarkerEntry(**data)
+
+        except Exception as e:
+            last_err = e
+            logger.warning(
+                "Research attempt %d/%d failed for '%s': %s",
+                attempt + 1,
+                max_attempts,
+                biomarker_name,
+                e,
+            )
+            if attempt < max_attempts - 1:
+                await asyncio.sleep(1.0 * (2**attempt))
+
+    logger.error(
+        "Failed to research biomarker '%s' after %d attempts: %s",
+        biomarker_name,
+        max_attempts,
+        last_err,
+    )
+    return _fallback_biomarker_from_context(biomarker_name, item)
