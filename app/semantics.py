@@ -21,6 +21,10 @@ _URINE_ANALYTE_HINTS = {
 _COMPUTED_HINT_TOKENS = {
     "ratio",
     "index",
+    "indice",
+    "índice",
+    "indeks",
+    "castelli",
     "score",
     "homa",
     "saturation",

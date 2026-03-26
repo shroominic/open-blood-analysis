@@ -1443,6 +1443,20 @@ async def _analyze_flow(
                             analyzed_results[index] = analyzed.model_copy(
                                 update={"notes": "; ".join(notes)}
                             )
+                        elif isinstance(item.value, (int, float)) and not isinstance(item.value, bool):
+                            analyzed = logic.analyze_value(
+                                raw_name=item.raw_name,
+                                raw_value=item.value,
+                                raw_unit=item.unit or matched_entry.canonical_unit,
+                                entry=matched_entry,
+                                sex=effective_sex,
+                                age=effective_age,
+                                specimen=item.specimen,
+                                semantic_value=item.semantic_value,
+                                measurement_qualifier=item.measurement_qualifier,
+                                provenance="reported",
+                            )
+                            analyzed_results[index] = analyzed
                         else:
                             _store_unknown_result(index, item)
                     else:
