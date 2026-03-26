@@ -1454,7 +1454,7 @@ async def _analyze_flow(
                                 specimen=item.specimen,
                                 semantic_value=item.semantic_value,
                                 measurement_qualifier=item.measurement_qualifier,
-                                provenance="reported",
+                                provenance="observed",
                             )
                             analyzed_results[index] = analyzed
                         else:
