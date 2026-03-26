@@ -36,6 +36,38 @@ class ExtractionEngineSpec(BaseModel):
         return None
 
 
+class ResearchBackendSpec(BaseModel):
+    type: Literal["gemini", "openai_compatible", "perplexity"]
+    id: str | None = None
+    enabled: bool = True
+    base_url: str | None = None
+    api_key: str | None = None
+    api_key_env: str | None = None
+    supports_web_search: bool | None = None
+
+    def resolved_id(self) -> str:
+        return self.id or self.type
+
+    def resolved_api_key(self) -> str | None:
+        if self.api_key:
+            return self.api_key
+        if self.api_key_env:
+            return os.getenv(self.api_key_env)
+        return None
+
+    def resolved_base_url(self) -> str | None:
+        if self.base_url:
+            return self.base_url
+        if self.type == "perplexity":
+            return "https://api.perplexity.ai"
+        return None
+
+    def resolved_supports_web_search(self) -> bool:
+        if self.supports_web_search is not None:
+            return self.supports_web_search
+        return self.type in {"gemini", "perplexity"}
+
+
 class Config(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -58,6 +90,8 @@ class Config(BaseSettings):
     extraction_engines: list[ExtractionEngineSpec] = Field(default_factory=list)
     extraction_fusion_mode: Literal["primary", "union", "consensus"] = "primary"
     extraction_debug_dir: str | None = None
+    research_backends: list[ResearchBackendSpec] = Field(default_factory=list)
+    research_strategy: Literal["primary", "fallback"] = "primary"
 
     @property
     def ocr(self) -> str:
@@ -96,5 +130,30 @@ class Config(BaseSettings):
                 base_url=self.openai_base_url,
                 api_key=self.openai_api_key,
                 weight=1.0,
+            )
+        ]
+
+    @property
+    def resolved_research_backends(self) -> list[ResearchBackendSpec]:
+        if self.research_backends:
+            return [spec for spec in self.research_backends if spec.enabled]
+
+        if self.ai_provider == "gemini":
+            return [
+                ResearchBackendSpec(
+                    type="gemini",
+                    id="gemini_research",
+                    api_key=self.gemini_api_key,
+                    supports_web_search=True,
+                )
+            ]
+
+        return [
+            ResearchBackendSpec(
+                type="openai_compatible",
+                id="openai_research",
+                base_url=self.openai_base_url,
+                api_key=self.openai_api_key,
+                supports_web_search=False,
             )
         ]
