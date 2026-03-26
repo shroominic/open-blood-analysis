@@ -47,7 +47,7 @@ class Config(BaseSettings):
     gemini_api_key: str | None = None
     openai_api_key: str | None = None
     openai_base_url: str = "https://api.openai.com/v1"
-    ai_model: str = "gemini-3.1-pro-preview"
+    ai_model: str = "gemini-3.1-flash-lite-preview"
 
     # Task specific models (fallback to ai_model if None)
     ai_ocr_model: str | None = None
