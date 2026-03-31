@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Literal, Protocol
 
-from app.config import Config
-from app.extraction.types import EngineExtractionResult, PageArtifact
+from openblood.config import Config
+from openblood.extraction.types import EngineExtractionResult, PageArtifact
 
 ExecutionMode = Literal["document", "page"]
 

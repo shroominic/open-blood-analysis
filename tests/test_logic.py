@@ -2,8 +2,8 @@ import logging
 
 import pytest
 
-from app.logic import analyze_value, convert_units
-from app.types import BiomarkerEntry, ReferenceRangeRule
+from openblood.logic import analyze_value, convert_units
+from openblood.types import BiomarkerEntry, ReferenceRangeRule
 
 
 def test_analyze_value_converts_units_with_normalized_lookup():
@@ -89,7 +89,7 @@ def test_analyze_value_logs_invalid_reference_rule_variables(caplog):
         ],
     )
 
-    caplog.set_level(logging.WARNING, logger="app.logic")
+    caplog.set_level(logging.WARNING, logger="openblood.logic")
     result = analyze_value(
         raw_name="LDL",
         raw_value=95.0,
@@ -122,7 +122,7 @@ def test_analyze_value_skips_age_rules_without_warning_when_age_missing(caplog):
         ],
     )
 
-    caplog.set_level(logging.WARNING, logger="app.logic")
+    caplog.set_level(logging.WARNING, logger="openblood.logic")
     result = analyze_value(
         raw_name="Test",
         raw_value=90.0,

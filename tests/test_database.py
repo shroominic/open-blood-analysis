@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from app import database as db
-from app.types import BiomarkerEntry, LearnedContextAlias, LearnedValueAlias
+from openblood import database as db
+from openblood.types import BiomarkerEntry, LearnedContextAlias, LearnedValueAlias
 
 
 def _entry(entry_id: str, aliases: list[str]) -> BiomarkerEntry:

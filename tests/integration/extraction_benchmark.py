@@ -141,22 +141,22 @@ def _resolve_input_path(test_case: str, explicit_input_path: str | None) -> Path
     if explicit_input_path:
         return Path(explicit_input_path)
 
-    input_examples = PROJECT_ROOT / "input-examples"
+    input_data_dir = PROJECT_ROOT / "data"
     candidates = [
-        input_examples / f"{test_case}.pdf",
-        input_examples / f"{test_case}.png",
-        input_examples / f"{test_case}.jpg",
-        input_examples / f"{test_case}.jpeg",
-        input_examples / f"{test_case}.webp",
+        input_data_dir / f"{test_case}.pdf",
+        input_data_dir / f"{test_case}.png",
+        input_data_dir / f"{test_case}.jpg",
+        input_data_dir / f"{test_case}.jpeg",
+        input_data_dir / f"{test_case}.webp",
     ]
     for candidate in candidates:
         if candidate.exists():
             return candidate
-    raise FileNotFoundError(f"Could not resolve input example for test case '{test_case}'.")
+    raise FileNotFoundError(f"Could not resolve data file for test case '{test_case}'.")
 
 
 def _build_engine_specs(args: argparse.Namespace, config):
-    from app.config import ExtractionEngineSpec
+    from openblood.config import ExtractionEngineSpec
 
     selected_engines = args.engine or ["gemini_vision"]
     specs: list[ExtractionEngineSpec] = []
@@ -208,9 +208,9 @@ def _build_engine_specs(args: argparse.Namespace, config):
 
 
 async def run_extraction_benchmark(args: argparse.Namespace) -> int:
-    from app import loader
-    from app.config import Config
-    from app.extraction import extract_report
+    from openblood import loader
+    from openblood.config import Config
+    from openblood.extraction import extract_report
 
     config = Config()
     config.extraction_engines = _build_engine_specs(args, config)

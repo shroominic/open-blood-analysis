@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.ai_client import GeminiAIClient
+from openblood.ai_client import GeminiAIClient
 
 
 class GeminiResearchBackend:

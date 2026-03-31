@@ -5,12 +5,12 @@ import re
 from difflib import SequenceMatcher
 from typing import Any
 
-from app.extraction.types import (
+from openblood.extraction.types import (
     EngineBiomarkerCandidate,
     EngineExtractionResult,
     ExtractionPipelineResult,
 )
-from app.types import ExtractedBiomarker, ReportMetadata
+from openblood.types import ExtractedBiomarker, ReportMetadata
 
 _NON_ALNUM_RE = re.compile(r"[^a-z0-9]+")
 

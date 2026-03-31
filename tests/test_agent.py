@@ -1,10 +1,10 @@
-from app.agent import (
+from openblood.agent import (
     _extract_json_payload,
     _fallback_biomarker_from_context,
     _parse_binary_decision_payload,
     _sanitize_research_payload,
 )
-from app.types import ExtractedBiomarker
+from openblood.types import ExtractedBiomarker
 
 
 def test_sanitize_research_payload_nulls_redundant_optimal_range():

@@ -4,9 +4,9 @@ import json
 import logging
 from typing import Literal
 
-from app.ai_client import retry_async
-from app.research.backends.base import ResearchBackend
-from app.types import BiomarkerEntry, ExtractedBiomarker
+from openblood.ai_client import retry_async
+from openblood.research.backends.base import ResearchBackend
+from openblood.types import BiomarkerEntry, ExtractedBiomarker
 
 logger = logging.getLogger(__name__)
 

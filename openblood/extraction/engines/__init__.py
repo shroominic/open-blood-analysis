@@ -1,6 +1,6 @@
-from app.extraction.engines.gemini_vision import GeminiVisionEngine
-from app.extraction.engines.liteparse_text import LiteParseTextEngine
-from app.extraction.engines.openai_compatible_vision import (
+from openblood.extraction.engines.gemini_vision import GeminiVisionEngine
+from openblood.extraction.engines.liteparse_text import LiteParseTextEngine
+from openblood.extraction.engines.openai_compatible_vision import (
     OpenAICompatibleVisionEngine,
 )
 

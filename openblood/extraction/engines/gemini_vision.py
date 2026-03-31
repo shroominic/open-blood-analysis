@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Literal
 
-from app import llm
-from app.config import Config
-from app.extraction.types import (
+from openblood import llm
+from openblood.config import Config
+from openblood.extraction.types import (
     EngineBiomarkerCandidate,
     EngineExtractionResult,
     PageArtifact,

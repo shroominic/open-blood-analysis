@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from app.ai_client import AIClient
+from openblood.ai_client import AIClient
 
 
 class ResearchBackend(Protocol):

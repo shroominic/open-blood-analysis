@@ -203,7 +203,7 @@ Reference ranges can be customized by demographics:
 ## 🏗️ Architecture
 
 ```
-app/
+openblood/
 ├── main.py      # CLI entry point
 ├── config.py    # Configuration management
 ├── loader.py    # PDF/image ingestion

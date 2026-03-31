@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from app.types import ExtractedBiomarker, ReportMetadata
+from openblood.types import ExtractedBiomarker, ReportMetadata
 
 
 class PageArtifact(BaseModel):

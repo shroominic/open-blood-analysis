@@ -2,21 +2,21 @@ from __future__ import annotations
 
 import asyncio
 
-from app.config import Config
-from app.extraction.engines.base import ExtractionEngine
-from app.extraction.engines.gemini_vision import GeminiVisionEngine
-from app.extraction.engines.liteparse_text import LiteParseTextEngine
-from app.extraction.engines.openai_compatible_vision import (
+from openblood.config import Config
+from openblood.extraction.engines.base import ExtractionEngine
+from openblood.extraction.engines.gemini_vision import GeminiVisionEngine
+from openblood.extraction.engines.liteparse_text import LiteParseTextEngine
+from openblood.extraction.engines.openai_compatible_vision import (
     OpenAICompatibleVisionEngine,
 )
-from app.extraction.fusion import fuse_engine_results
-from app.extraction.types import (
+from openblood.extraction.fusion import fuse_engine_results
+from openblood.extraction.types import (
     EngineBiomarkerCandidate,
     EngineExtractionResult,
     ExtractionPipelineResult,
     PageArtifact,
 )
-from app.types import ReportMetadata
+from openblood.types import ReportMetadata
 
 
 def _build_page_artifacts(image_paths: list[str]) -> list[PageArtifact]:

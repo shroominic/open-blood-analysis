@@ -1,5 +1,5 @@
-from app.computed import compute_entry, values_match
-from app.types import AnalyzedBiomarker, BiomarkerEntry
+from openblood.computed import compute_entry, values_match
+from openblood.types import AnalyzedBiomarker, BiomarkerEntry
 
 
 def test_compute_entry_uses_dependencies_from_analyzed_results():

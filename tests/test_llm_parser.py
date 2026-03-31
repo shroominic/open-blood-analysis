@@ -1,6 +1,6 @@
 import json
 
-from app.llm import _parse_llm_response
+from openblood.llm import _parse_llm_response
 
 
 def test_parse_llm_response_coerces_numeric_like_strings():

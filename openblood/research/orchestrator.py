@@ -3,23 +3,23 @@ from __future__ import annotations
 import logging
 from typing import Any, Awaitable, Callable, TypeVar
 
-from app.ai_client import AIClient
-from app.config import Config, ResearchBackendSpec
-from app.research.backends import (
+from openblood.ai_client import AIClient
+from openblood.config import Config, ResearchBackendSpec
+from openblood.research.backends import (
     DelegatingAIClientResearchBackend,
     GeminiResearchBackend,
     OpenAICompatibleResearchBackend,
     PerplexityResearchBackend,
     ResearchBackend,
 )
-from app.research.tasks import (
+from openblood.research.tasks import (
     disambiguate_biomarker as disambiguate_task,
     recommend_binary_decision as binary_decision_task,
     recommend_merge_decision as merge_decision_task,
     research_biomarker as biomarker_research_task,
     think_unit_conversion as unit_conversion_task,
 )
-from app.types import BiomarkerEntry, ExtractedBiomarker
+from openblood.types import BiomarkerEntry, ExtractedBiomarker
 
 logger = logging.getLogger(__name__)
 

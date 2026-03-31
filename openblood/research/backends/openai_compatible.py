@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.ai_client import OpenAIClient
+from openblood.ai_client import OpenAIClient
 
 
 class OpenAICompatibleResearchBackend:

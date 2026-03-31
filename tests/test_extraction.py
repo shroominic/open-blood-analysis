@@ -1,11 +1,11 @@
 import asyncio
 import json
 
-from app.config import Config, ExtractionEngineSpec
-from app.extraction.engines.gemini_vision import GeminiVisionEngine
-from app.extraction.orchestrator import extract_report
-from app.extraction.types import EngineExtractionResult, PageArtifact
-from app.types import ExtractedBiomarker, ReportMetadata
+from openblood.config import Config, ExtractionEngineSpec
+from openblood.extraction.engines.gemini_vision import GeminiVisionEngine
+from openblood.extraction.orchestrator import extract_report
+from openblood.extraction.types import EngineExtractionResult, PageArtifact
+from openblood.types import ExtractedBiomarker, ReportMetadata
 
 
 def test_gemini_vision_engine_wraps_llm_extract_biomarkers(monkeypatch):
@@ -35,7 +35,7 @@ def test_gemini_vision_engine_wraps_llm_extract_biomarkers(monkeypatch):
         )
 
     monkeypatch.setattr(
-        "app.extraction.engines.gemini_vision.llm.extract_biomarkers",
+        "openblood.extraction.engines.gemini_vision.llm.extract_biomarkers",
         fake_extract_biomarkers,
     )
 

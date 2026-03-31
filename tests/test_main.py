@@ -4,7 +4,7 @@ from typing import Awaitable
 
 from typer.testing import CliRunner
 
-from app.main import (
+from openblood.main import (
     app,
     _build_config,
     _can_use_exact_alias_match,
@@ -14,7 +14,7 @@ from app.main import (
     _high_confidence_candidate,
     _upsert_biomarker_entry,
 )
-from app.types import BiomarkerEntry, ExtractedBiomarker
+from openblood.types import BiomarkerEntry, ExtractedBiomarker
 
 runner = CliRunner()
 
@@ -194,8 +194,8 @@ def test_cli_passes_biomarkers_path_to_analyze_flow(monkeypatch, tmp_path: Path)
         finally:
             loop.close()
 
-    monkeypatch.setattr("app.main._analyze_flow", fake_analyze_flow)
-    monkeypatch.setattr("app.main.asyncio.run", run_sync)
+    monkeypatch.setattr("openblood.main._analyze_flow", fake_analyze_flow)
+    monkeypatch.setattr("openblood.main.asyncio.run", run_sync)
 
     result = runner.invoke(
         app,
@@ -230,8 +230,8 @@ def test_cli_passes_biomarkers_path_to_reresearch_flow(monkeypatch, tmp_path: Pa
         finally:
             loop.close()
 
-    monkeypatch.setattr("app.main._reresearch_flow", fake_reresearch_flow)
-    monkeypatch.setattr("app.main.asyncio.run", run_sync)
+    monkeypatch.setattr("openblood.main._reresearch_flow", fake_reresearch_flow)
+    monkeypatch.setattr("openblood.main.asyncio.run", run_sync)
 
     result = runner.invoke(
         app,

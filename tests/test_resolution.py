@@ -1,5 +1,5 @@
-from app import resolution
-from app.types import BiomarkerEntry, ComputedDefinition, ExtractedBiomarker
+from openblood import resolution
+from openblood.types import BiomarkerEntry, ComputedDefinition, ExtractedBiomarker
 
 
 def _entry(

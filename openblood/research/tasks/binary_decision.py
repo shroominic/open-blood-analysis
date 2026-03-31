@@ -4,9 +4,9 @@ import json
 import logging
 from typing import Any
 
-from app.ai_client import retry_async
-from app.research.backends.base import ResearchBackend
-from app.research.tasks.common import extract_json_payload, parse_binary_decision_payload
+from openblood.ai_client import retry_async
+from openblood.research.backends.base import ResearchBackend
+from openblood.research.tasks.common import extract_json_payload, parse_binary_decision_payload
 
 logger = logging.getLogger(__name__)
 

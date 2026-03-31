@@ -1,7 +1,7 @@
 import pytest
 
-from app.ai_client import GeminiAIClient, OpenAIClient, build_ai_client
-from app.config import Config
+from openblood.ai_client import GeminiAIClient, OpenAIClient, build_ai_client
+from openblood.config import Config
 
 
 def test_build_ai_client_returns_gemini_client_when_configured():

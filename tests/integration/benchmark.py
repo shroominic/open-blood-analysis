@@ -512,7 +512,7 @@ def main():
 
     project_root = Path(__file__).resolve().parent.parent.parent
     golden_dir = Path(__file__).resolve().parent / "golden" / args.test_case
-    input_pdf = project_root / "input-examples" / f"{args.test_case}.pdf"
+    input_pdf = project_root / "data" / f"{args.test_case}.pdf"
 
     # Source for biomarkers DB: use golden 'before' state if available, else root DB
     golden_before = golden_dir / "biomarkers_before.json"

@@ -5,10 +5,10 @@ import json
 import logging
 from typing import Any
 
-from app.research.backends.base import ResearchBackend
-from app.research.tasks.common import extract_json_payload
-from app.semantics import normalize_specimen, normalize_token, semantic_value_from_text
-from app.types import BiomarkerEntry, ExtractedBiomarker
+from openblood.research.backends.base import ResearchBackend
+from openblood.research.tasks.common import extract_json_payload
+from openblood.semantics import normalize_specimen, normalize_token, semantic_value_from_text
+from openblood.types import BiomarkerEntry, ExtractedBiomarker
 
 logger = logging.getLogger(__name__)
 
